@@ -48,13 +48,17 @@ final class Stato: ObservableObject {
         let cals = store.calendars(for: .event).filter { scelti.contains($0.calendarIdentifier) }
         guard !cals.isEmpty else { daCalendario = []; return }
         let oggi = Calendar.current.startOfDay(for: .now)
-        let da = Calendar.current.date(byAdding: .day, value: -70, to: oggi)!
-        let a = Calendar.current.date(byAdding: .day, value: 70, to: oggi)!
-        let eventi = store.events(matching: store.predicateForEvents(withStart: da, end: a, calendars: cals))
+        // Anche i turni passati (fino a 2 anni), letti un anno alla volta: EventKit cerca al massimo 4 anni per volta.
+        var eventi: [EKEvent] = []
+        for anno in [-730, -365, 0] {
+            let da = Calendar.current.date(byAdding: .day, value: anno, to: oggi)!
+            let a = Calendar.current.date(byAdding: .day, value: anno == 0 ? 120 : 365, to: da)!
+            eventi += store.events(matching: store.predicateForEvents(withStart: da, end: a, calendars: cals))
+        }
         let nuovi = eventi.filter { !$0.isAllDay && $0.endDate > $0.startDate && !Condivisione.èDellApp($0) }
             .map { Turno(id: $0.eventIdentifier ?? UUID().uuidString, inizio: $0.startDate, fine: $0.endDate) }
-            .sorted { $0.inizio < $1.inizio }
-        if nuovi != daCalendario { daCalendario = nuovi }
+        let senza = Calcoli.senzaDoppioni(nuovi)
+        if senza != daCalendario { daCalendario = senza }
     }
 
     /// Salva i turni per il widget e aggiorna conto alla rovescia e avvisi.

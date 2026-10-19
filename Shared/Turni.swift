@@ -79,6 +79,15 @@ enum Calcoli {
         turni.filter { $0.inizio >= da && $0.inizio < a }.reduce(0) { $0 + $1.ore }
     }
 
+    /// Toglie i doppioni: lo stesso turno in due calendari (es. Dayforce e SuperShift) conta una volta.
+    static func senzaDoppioni(_ turni: [Turno]) -> [Turno] {
+        var visti = Set<String>()
+        return turni.sorted { $0.inizio < $1.inizio }.filter { t in
+            let k = "\(Int(t.inizio.timeIntervalSince1970 / 60))-\(Int(t.fine.timeIntervalSince1970 / 60))"
+            return visti.insert(k).inserted
+        }
+    }
+
     /// Unisce i turni del calendario con quelli segnati a mano:
     /// nei giorni segnati a mano vale la scelta manuale (anche "riposo", che toglie il turno).
     static func unisci(dalCalendario cal: [Turno], manuali: [Turno], riposi: [Date],
@@ -125,6 +134,30 @@ enum Calcoli {
         c.firstWeekday = 2
         c.timeZone = .current
         return c.dateInterval(of: .weekOfYear, for: d)?.start ?? c.startOfDay(for: d)
+    }
+}
+
+// Turni confermati a fine giornata ("Sì, giusto" o modificati), per giorno.
+enum Conferme {
+    static func chiave(_ d: Date) -> String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: d)
+        return "\(c.year!)-\(c.month!)-\(c.day!)"
+    }
+
+    static func confermato(_ d: Date) -> Bool {
+        (Archivio.defaults.stringArray(forKey: "confermati") ?? []).contains(chiave(d))
+    }
+
+    static func conferma(_ d: Date) {
+        var tutti = Archivio.defaults.stringArray(forKey: "confermati") ?? []
+        if !tutti.contains(chiave(d)) { tutti.append(chiave(d)) }
+        Archivio.defaults.set(Array(tutti.suffix(400)), forKey: "confermati")
+    }
+
+    /// L'ultimo turno finito negli ultimi 3 giorni e non ancora confermato.
+    static func daConfermare(_ turni: [Turno], ora: Date, confermato: (Date) -> Bool = confermato) -> Turno? {
+        turni.filter { $0.fine <= ora && $0.fine > ora.addingTimeInterval(-3 * 86400) && !confermato($0.inizio) }
+            .max { $0.inizio < $1.inizio }
     }
 }
 

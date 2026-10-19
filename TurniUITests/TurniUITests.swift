@@ -30,7 +30,8 @@ final class TurniUITests: XCTestCase {
         app.buttons["☀️ Mattina"].tap()
         app.buttons["Salva"].tap()
         app.tabBars.buttons["Oggi"].tap()
-        XCTAssertTrue(app.staticTexts["☀️ Mattina"].waitForExistence(timeout: 5))
+        // Prima della fine del turno si vede la mattina, dopo c'è la conferma (il turno è già confermato perché segnato a mano).
+        XCTAssertTrue(app.staticTexts["☀️ Mattina"].waitForExistence(timeout: 5) || app.staticTexts["confermato"].exists)
         app.tabBars.buttons["Calendario"].tap()
         XCTAssertTrue(app.staticTexts["Ore per settimana"].waitForExistence(timeout: 5))
         app.tabBars.buttons["Oggi"].tap()

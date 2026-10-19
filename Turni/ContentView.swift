@@ -114,6 +114,36 @@ func formatoGiorno(_ d: Date, _ formato: String) -> String {
     return f.string(from: d)
 }
 
+/// "40 h 5 min"
+func oreMinuti(_ ore: Double) -> String {
+    let m = Int((ore * 60).rounded())
+    return m % 60 == 0 ? "\(m / 60) h" : "\(m / 60) h \(m % 60) min"
+}
+
+/// "40,08 h" (ore in centesimi)
+func centesimi(_ ore: Double) -> String {
+    String(format: "%.2f h", ore).replacingOccurrences(of: ".", with: ",")
+}
+
+/// Ore in due modi: "40 h 5 min" e sotto, piccolo, "40,08 h".
+struct OreTesto: View {
+    var ore: Double
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 0) {
+            Text(oreMinuti(ore)).bold()
+            Text(centesimi(ore)).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+        }
+    }
+}
+
+struct RigaOre: View {
+    var titolo: String
+    var ore: Double
+    var body: some View {
+        HStack { Text(titolo); Spacer(); OreTesto(ore: ore) }.font(.subheadline)
+    }
+}
+
 func formatoOre(_ ore: Double) -> String {
     ore == ore.rounded() ? "\(Int(ore))" : String(format: "%.1f", ore).replacingOccurrences(of: ".", with: ",")
 }
@@ -131,6 +161,9 @@ struct OggiView: View {
     var turni: [Turno]
     var nome: String?
     @Binding var chi: String?
+
+    @State private var modifica: CalendarioView.Giorno?
+    @State private var aggiorna = false
 
     func etichetta(_ t: String) -> String { nome.map { "\($0.uppercased()) · \(t)" } ?? t }
 
@@ -154,38 +187,109 @@ struct OggiView: View {
                         }
                     }
                     cartaOggi(ora)
-                    cartaDomani(ora)
                     settimana(ora)
                     memoOggi
                 }
                 .padding(16)
             }
             .background(AppColor.sfondo)
+            .id(aggiorna)
+        }
+        .sheet(item: $modifica) { g in
+            SceltaTurno(giorno: g.id, dayforce: Calcoli.turno(stato.daCalendario, giorno: g.id))
+                .presentationDetents([.large])
         }
     }
 
     @ViewBuilder func cartaOggi(_ ora: Date) -> some View {
-        let t = Calcoli.inCorso(turni, ora: ora) ?? Calcoli.turno(turni, giorno: ora)
-        VStack(alignment: .leading, spacing: 4) {
-            Text(etichetta(t.map { Calcoli.inCorso(turni, ora: ora) == $0 ? "TURNO IN CORSO" : "TURNO DI OGGI" } ?? "OGGI"))
-                .font(.footnote.bold()).opacity(0.9)
-            if let t {
+        let oggi = Calcoli.inCorso(turni, ora: ora) ?? Calcoli.turno(turni, giorno: ora)
+        if nome == nil, let d = Conferme.daConfermare(turni, ora: ora) {
+            cartaConferma(d)
+        }
+        if let t = oggi, t.fine > ora {
+            // Turno di oggi ancora da fare o in corso.
+            VStack(alignment: .leading, spacing: 4) {
+                Text(etichetta(t.inizio <= ora ? "TURNO IN CORSO" : "TURNO DI OGGI")).font(.footnote.bold()).opacity(0.9)
                 Text("\(t.tipo.emoji) \(t.tipo.nome)").font(.system(size: 30, weight: .heavy))
-                Text("\(t.orario) · \(formatoOre(t.ore)) ore").font(.title3)
-                if t.inizio <= ora && ora < t.fine {
+                Text("\(t.orario) · \(oreMinuti(t.ore))").font(.title3)
+                if t.inizio <= ora {
                     Text("Mancano \(durata(t.fine.timeIntervalSince(ora)))").font(.headline)
                     if nome == nil { BottonePausa(turno: t) }
-                } else if t.fine <= ora {
-                    Text("Turno finito").font(.headline)
                 }
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .background(t.tipo.colore, in: RoundedRectangle(cornerRadius: 20))
+            cartaDomani(ora)
+        } else {
+            if oggi == nil {
+                Text(etichetta("OGGI") + "\n😴 Riposo")
+                    .font(.system(size: 26, weight: .heavy))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(18)
+                    .background(AppColor.riposo, in: RoundedRectangle(cornerRadius: 20))
+            } else if let t = oggi, nome == nil, Conferme.confermato(t.inizio) {
+                Riquadro {
+                    HStack {
+                        Text("✅ Oggi \(t.orario)")
+                        Spacer()
+                        Text("confermato").bold().foregroundStyle(AppColor.fng)
+                    }
+                }
+            }
+            cartaProssimo(ora)
+        }
+    }
+
+    /// Il prossimo turno in grande, con il giorno.
+    @ViewBuilder func cartaProssimo(_ ora: Date) -> some View {
+        let p = Calcoli.prossimo(turni, dopo: ora)
+        VStack(alignment: .leading, spacing: 4) {
+            if let p {
+                let giorni = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: ora),
+                                                             to: Calendar.current.startOfDay(for: p.inizio)).day ?? 0
+                let quando = giorni == 1 ? "DOMANI " + formatoGiorno(p.inizio, "EEE d").uppercased()
+                    : formatoGiorno(p.inizio, "EEEE d MMMM").uppercased()
+                Text(etichetta("PROSSIMO TURNO · \(quando)")).font(.footnote.bold()).opacity(0.9)
+                Text("\(p.tipo.emoji) \(p.tipo.nome)").font(.system(size: 30, weight: .heavy))
+                Text("\(p.orario) · \(oreMinuti(p.ore))").font(.title3)
+                if giorni > 1 { Text("tra \(giorni) giorni").font(.subheadline) }
             } else {
-                Text("😴 Riposo").font(.system(size: 30, weight: .heavy))
+                Text(etichetta("PROSSIMO TURNO")).font(.footnote.bold()).opacity(0.9)
+                Text("Nessun turno in calendario").font(.title3.weight(.heavy))
             }
         }
-        .foregroundStyle(t == nil ? Color.primary : .white)
+        .foregroundStyle(p == nil ? Color.primary : .white)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(t?.tipo.colore ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 20))
+        .background(p?.tipo.colore ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    func cartaConferma(_ t: Turno) -> some View {
+        let oggi = Calendar.current.isDateInToday(t.inizio)
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(oggi ? "✔︎ CONFERMA IL TURNO DI OGGI" : "✔︎ CONFERMA IL TURNO DI " + formatoGiorno(t.inizio, "EEEE d").uppercased())
+                .font(.footnote.bold()).foregroundStyle(.orange)
+            Text("\(t.tipo.emoji) \(t.orario)").font(.title2.weight(.heavy))
+            Text("pausa \(t.pausa) min · **\(oreMinuti(t.ore))** (\(centesimi(t.ore)))").foregroundStyle(.secondary)
+            Text("Hai fatto queste ore?")
+            HStack(spacing: 8) {
+                Button { Conferme.conferma(t.inizio); aggiorna.toggle() } label: {
+                    Text("✅ Sì, giusto").bold().foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 44)
+                        .background(AppColor.fng, in: RoundedRectangle(cornerRadius: 12))
+                }
+                Button { modifica = CalendarioView.Giorno(id: Calendar.current.startOfDay(for: t.inizio)) } label: {
+                    Text("✏️ Modifica").bold().foregroundStyle(.primary).frame(maxWidth: .infinity, minHeight: 44)
+                        .background(AppColor.sfondo, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(.white, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppColor.mattina, lineWidth: 2))
     }
 
     @ViewBuilder func cartaDomani(_ ora: Date) -> some View {
@@ -209,7 +313,8 @@ struct OggiView: View {
         let giorni = Set(sett.map { Calendar.current.startOfDay(for: $0.inizio) }).count
         return Riquadro {
             Text("Questa settimana").font(.headline)
-            Riga(titolo: "Ore fatte / previste", valore: "\(formatoOre(fatte)) / \(formatoOre(sett.reduce(0) { $0 + $1.ore }))")
+            RigaOre(titolo: "Ore fatte", ore: fatte)
+            RigaOre(titolo: "Ore previste", ore: sett.reduce(0) { $0 + $1.ore })
             Riga(titolo: "Mattine · Pomeriggi",
                  valore: "\(sett.filter { $0.tipo == .mattina }.count) · \(sett.filter { $0.tipo == .pomeriggio }.count)")
             Riga(titolo: "Riposi", valore: "\(7 - giorni)")
@@ -325,10 +430,16 @@ struct CalendarioView: View {
         return Button { if nome == nil { scelto = Giorno(id: g) } } label: {
             VStack(spacing: 1) {
                 Text("\(Calendar.current.component(.day, from: g))").font(.subheadline.bold())
-                Text(t.map { $0.tipo == .mattina ? "MAT" : "POM" } ?? "—").font(.system(size: 9, weight: .bold))
+                if let t {
+                    Text("\(Turno.ora(t.inizio))\n\(Turno.ora(t.fine))")
+                        .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
+                        .lineLimit(2).minimumScaleFactor(0.7)
+                } else {
+                    Text("—\n ").font(.system(size: 9, weight: .bold))
+                }
             }
             .foregroundStyle(t == nil ? Color.primary : .white)
-            .frame(maxWidth: .infinity, minHeight: 44)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .background(t?.tipo.colore ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 9))
             .overlay(RoundedRectangle(cornerRadius: 9).stroke(.black, lineWidth: oggi ? 2 : 0))
             .opacity(fuori ? 0.4 : 1)
@@ -346,7 +457,7 @@ struct CalendarioView: View {
             HStack {
                 Text("**\(delMese.filter { $0.tipo == .mattina }.count)** M · **\(delMese.filter { $0.tipo == .pomeriggio }.count)** P · **\(n - lavorati)** R")
                 Spacer()
-                Text("\(formatoOre(Calcoli.ore(turni, da: mese, a: fine))) h").bold()
+                OreTesto(ore: Calcoli.ore(turni, da: mese, a: fine))
             }
         }
     }
@@ -371,10 +482,10 @@ struct CalendarioView: View {
                                 .background(AppColor.fng, in: RoundedRectangle(cornerRadius: 6))
                         }
                         Spacer()
-                        Text("\(formatoOre(ore)) h").bold()
+                        OreTesto(ore: ore)
                     }
                     if !fng, ore >= Calcoli.oreContratto, Calcoli.turno(turni, giorno: domenica) != nil {
-                        Text("Domenica lavorata: mancano \(formatoOre(Calcoli.oreFNG - ore)) h per l'FNG")
+                        Text("Domenica lavorata: mancano \(oreMinuti(Calcoli.oreFNG - ore)) per l'FNG")
                             .font(.caption).foregroundStyle(.secondary).padding(.leading, 30)
                     }
                 }
@@ -508,6 +619,7 @@ struct SceltaTurno: View {
         let m = TurnoManuale(giorno: giorno, riposo: riposo, inizio: inizio, fine: fineVera)
         m.pausa = pausa
         contesto.insert(m)
+        Conferme.conferma(giorno)
         chiudi()
     }
 }
@@ -644,7 +756,8 @@ struct OreView: View {
                     Button { spostamento += 1 } label: { Image(systemName: "chevron.right") }
                 }
                 Riquadro {
-                    Text("\(formatoOre(Calcoli.ore(turni, da: da, a: a))) ore").font(.system(size: 34, weight: .heavy))
+                    Text(oreMinuti(Calcoli.ore(turni, da: da, a: a))).font(.system(size: 34, weight: .heavy))
+                    Text(centesimi(Calcoli.ore(turni, da: da, a: a))).font(.headline).foregroundStyle(.secondary)
                     Riga(titolo: "☀️ Mattine", valore: "\(lista.filter { $0.tipo == .mattina }.count)")
                     Riga(titolo: "🌙 Pomeriggi", valore: "\(lista.filter { $0.tipo == .pomeriggio }.count)")
                 }

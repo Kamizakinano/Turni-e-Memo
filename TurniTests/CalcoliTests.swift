@@ -112,6 +112,31 @@ final class CalcoliTests: XCTestCase {
         XCTAssertEqual(Condivisione.nome("Turni Salvo"), "Salvo")
     }
 
+    func testOreInMinutiECentesimi() {
+        XCTAssertEqual(oreMinuti(40 + 5.0 / 60), "40 h 5 min")
+        XCTAssertEqual(centesimi(40 + 5.0 / 60), "40,08 h")
+        XCTAssertEqual(oreMinuti(8), "8 h")
+        XCTAssertEqual(oreMinuti(8 + 19.0 / 60), "8 h 19 min")
+    }
+
+    func testDoppioniTraDueCalendari() {
+        let a = turno(19, 6, 14)
+        var b = turno(19, 6, 14); b.id = "supershift"
+        XCTAssertEqual(Calcoli.senzaDoppioni([a, b, turno(20, 14, 22)]).count, 2)
+    }
+
+    func testTurnoDaConfermare() {
+        let turni = [turno(18, 6, 14), turno(19, 5, 13)]
+        // Durante il turno di oggi c'è da confermare quello di ieri.
+        XCTAssertEqual(Conferme.daConfermare(turni, ora: ora(19, 10), confermato: { _ in false })?.id, "18-6")
+        // Finito il turno di oggi, si chiede l'ultimo.
+        XCTAssertEqual(Conferme.daConfermare(turni, ora: ora(19, 14), confermato: { _ in false })?.id, "19-5")
+        // Confermati tutti e due: niente.
+        XCTAssertNil(Conferme.daConfermare(turni, ora: ora(19, 14), confermato: { _ in true }))
+        // Dopo 3 giorni non si chiede più.
+        XCTAssertNil(Conferme.daConfermare([turno(10, 6, 14)], ora: ora(19, 14), confermato: { _ in false }))
+    }
+
     func testArchivioSalvaECarica() {
         let turni = [turno(19, 6, 14)]
         Archivio.salva(turni)
