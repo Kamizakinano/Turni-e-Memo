@@ -1,0 +1,141 @@
+name: Build IPA
+on:
+  workflow_dispatch:
+    inputs:
+      video:
+        description: "Registra un video delle prove sul simulatore (solo su richiesta)"
+        type: boolean
+        default: false
+  push:
+    branches: [main, "claude/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Genera il progetto Xcode
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Prova sul simulatore (avvio e prove automatiche)
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)["devices"]
+          print(next(x["udid"] for k, v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")))')
+          echo "Simulatore: $UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+          xcodebuild -project Turni.xcodeproj -scheme Turni \
+            -configuration Release -sdk iphonesimulator -destination "id=$UDID" \
+            -derivedDataPath build-sim CODE_SIGN_IDENTITY="-" build 2>&1 | tee build.log
+          BS=${PIPESTATUS[0]}
+          if [ "$BS" -ne 0 ]; then
+            # Gli errori di compilazione diventano annotazioni leggibili dalla pagina del controllo.
+            grep -E "error:" build.log | sort -u | head -20 | sed 's/^/::error::/'
+            exit "$BS"
+          fi
+          xcrun simctl install "$UDID" build-sim/Build/Products/Release-iphonesimulator/Turni.app
+          PID=$(xcrun simctl launch "$UDID" com.tuonome.turni | awk '{print $NF}')
+          echo "Avviata con PID $PID"
+          sleep 20
+          xcrun simctl io "$UDID" screenshot screenshot.png
+          if ! ps -p "$PID" > /dev/null; then
+            echo "::error::L'app si è chiusa da sola (crash) dopo l'avvio"
+            # Il motivo del crash e le prime righe del thread che si è fermato, come annotazioni.
+            for f in $(ls -t ~/Library/Logs/DiagnosticReports/*Turni*.ips 2>/dev/null | head -1); do
+              python3 - "$f" <<'PY' | head -25 | sed 's/^/::error::/'
+          import json, sys
+          raw = open(sys.argv[1]).read()
+          body = json.loads(raw[raw.index("\n") + 1:])
+          ex = body.get("exception", {})
+          print("Crash:", ex.get("type"), ex.get("signal"), body.get("termination", {}).get("indicator", ""))
+          for k, v in (body.get("asi") or {}).items():
+              print("Messaggio:", k, " ".join(v)[:300])
+          imgs = body.get("usedImages", [])
+          th = next((t for t in body.get("threads", []) if t.get("triggered")), None)
+          for fr in (th or {}).get("frames", [])[:20]:
+              img = imgs[fr.get("imageIndex", 0)].get("name", "?") if fr.get("imageIndex", 0) < len(imgs) else "?"
+              loc = f' {fr["sourceFile"]}:{fr.get("sourceLine")}' if fr.get("sourceFile") else ""
+              print(f'{img} {fr.get("symbol", hex(fr.get("imageOffset", 0)))}{loc}')
+          PY
+            done
+            exit 1
+          fi
+          echo "L'app è ancora in esecuzione dopo 20 secondi: ok"
+
+          # Prove automatiche dell'uso dell'app, partendo da un'installazione pulita.
+          xcrun simctl uninstall "$UDID" com.tuonome.turni
+          REC=""
+          if [ "${{ inputs.video }}" = "true" ]; then
+            xcrun simctl io "$UDID" recordVideo --codec=h264 --force video-prove.mp4 &
+            REC=$!
+            sleep 3
+          fi
+          STATUS=0
+          xcodebuild test -project Turni.xcodeproj -scheme Turni -destination "id=$UDID" \
+            -derivedDataPath build-test CODE_SIGN_IDENTITY="-" 2>&1 | tee test.log
+          STATUS=${PIPESTATUS[0]}
+          if [ "$STATUS" -ne 0 ]; then
+            # Prove fallite ed errori di compilazione delle prove, come annotazioni.
+            grep -E "error:|failed \(|XCTAssert|Test Case .* failed" test.log | sort -u | head -25 | sed 's/^/::error::/'
+          fi
+          if [ -n "$REC" ]; then kill -INT "$REC"; wait "$REC" || true; ls -la video-prove.mp4 || true; fi
+          if [ "$STATUS" -ne 0 ]; then exit "$STATUS"; fi
+          # Schermata dell'app con i dati lasciati dalle prove.
+          xcrun simctl launch "$UDID" com.tuonome.turni
+          sleep 8
+          xcrun simctl io "$UDID" screenshot screenshot.png
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshot-simulatore
+          path: screenshot.png
+          if-no-files-found: ignore
+
+      - name: Compila per iPhone (senza firma)
+        run: |
+          xcodebuild -project Turni.xcodeproj -scheme Turni \
+            -configuration Release -sdk iphoneos -derivedDataPath build \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+
+      - name: Crea l'IPA
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/Turni.app Payload/
+          # Firma provvisoria solo per scrivere gli entitlements (gruppo condiviso con il widget):
+          # Sideloadly poi rifirma tutto con l'account dell'utente.
+          for X in Payload/Turni.app/PlugIns/*.appex; do
+            [ -d "$X" ] && codesign -f -s - --entitlements Config/Turni.entitlements "$X"
+          done
+          codesign -f -s - --entitlements Config/Turni.entitlements Payload/Turni.app
+          codesign -d --entitlements - Payload/Turni.app || true
+          ls Payload/Turni.app/PlugIns
+          zip -r Turni.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Turni-ipa
+          path: Turni.ipa
+
+      - name: Pubblica l'IPA nella Release "ultima-versione"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ultima-versione --yes --cleanup-tag || true
+          cp screenshot.png schermata-simulatore.png
+          FILES="Turni.ipa schermata-simulatore.png"
+          if [ -f video-prove.mp4 ]; then FILES="$FILES video-prove.mp4"; fi
+          gh release create ultima-versione $FILES \
+            --target "$GITHUB_SHA" --latest \
+            --title "Turni – build ${{ github.run_number }}" \
+            --notes "Compilata da ${GITHUB_REF_NAME} (${GITHUB_SHA::7}). Testata sul simulatore. Scarica Turni.ipa e installala con Sideloadly."
