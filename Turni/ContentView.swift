@@ -196,13 +196,6 @@ struct CalendarioView: View {
 
     struct Giorno: Identifiable { var id: Date }
 
-    var giorni: [Date?] {
-        let c = Calendar.current
-        let n = c.range(of: .day, in: .month, for: mese)!.count
-        let vuoti = (c.component(.weekday, from: mese) + 5) % 7
-        return Array(repeating: nil, count: vuoti) + (0..<n).map { c.date(byAdding: .day, value: $0, to: mese) }
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
@@ -214,16 +207,22 @@ struct CalendarioView: View {
                 }
                 Text("Tocca un giorno per cambiare turno").foregroundStyle(.secondary)
                 Riquadro {
-                    LazyVGrid(columns: Array(repeating: GridItem(spacing: 5), count: 7), spacing: 5) {
+                    LazyVGrid(columns: [GridItem(.fixed(14), spacing: 4)] + Array(repeating: GridItem(spacing: 5), count: 7), spacing: 5) {
+                        Color.clear.frame(height: 1)
                         ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
                             Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
                         }
-                        ForEach(Array(giorni.enumerated()), id: \.offset) { _, g in
-                            if let g { cella(g) } else { Color.clear.frame(height: 44) }
+                        ForEach(Calcoli.settimane(mese: mese), id: \.self) { lunedi in
+                            Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                                .accessibilityIdentifier("kw-\(Calcoli.kw(lunedi))")
+                            ForEach(0..<7, id: \.self) { i in
+                                cella(Calendar.current.date(byAdding: .day, value: i, to: lunedi)!)
+                            }
                         }
                     }
                 }
                 riepilogo
+                orePerSettimana
             }
             .padding(16)
         }
@@ -236,6 +235,7 @@ struct CalendarioView: View {
     func cella(_ g: Date) -> some View {
         let t = Calcoli.turno(turni, giorno: g)
         let oggi = Calendar.current.isDateInToday(g)
+        let fuori = !Calendar.current.isDate(g, equalTo: mese, toGranularity: .month)
         return Button { scelto = Giorno(id: g) } label: {
             VStack(spacing: 1) {
                 Text("\(Calendar.current.component(.day, from: g))").font(.subheadline.bold())
@@ -245,9 +245,10 @@ struct CalendarioView: View {
             .frame(maxWidth: .infinity, minHeight: 44)
             .background(t?.tipo.colore ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 9))
             .overlay(RoundedRectangle(cornerRadius: 9).stroke(.black, lineWidth: oggi ? 2 : 0))
+            .opacity(fuori ? 0.4 : 1)
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("giorno-\(Calendar.current.component(.day, from: g))")
+        .accessibilityIdentifier(fuori ? "fuori-\(Calendar.current.component(.day, from: g))" : "giorno-\(Calendar.current.component(.day, from: g))")
     }
 
     var riepilogo: some View {
@@ -260,6 +261,23 @@ struct CalendarioView: View {
                 Text("**\(delMese.filter { $0.tipo == .mattina }.count)** M · **\(delMese.filter { $0.tipo == .pomeriggio }.count)** P · **\(n - lavorati)** R")
                 Spacer()
                 Text("\(formatoOre(Calcoli.ore(turni, da: mese, a: fine))) h").bold()
+            }
+        }
+    }
+
+    var orePerSettimana: some View {
+        Riquadro {
+            Text("Ore per settimana").font(.headline)
+            ForEach(Calcoli.settimane(mese: mese), id: \.self) { lunedi in
+                let domenica = Calendar.current.date(byAdding: .day, value: 6, to: lunedi)!
+                let fine = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)!
+                HStack {
+                    Text("\(Calcoli.kw(lunedi))").font(.caption.bold()).foregroundStyle(.secondary).frame(width: 22, alignment: .leading)
+                    Text("\(formatoGiorno(lunedi, "d MMM")) – \(formatoGiorno(domenica, "d MMM"))")
+                    Spacer()
+                    Text("\(formatoOre(Calcoli.ore(turni, da: lunedi, a: fine))) h").bold()
+                }
+                .font(.subheadline)
             }
         }
     }

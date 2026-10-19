@@ -28,6 +28,9 @@ final class TurniUITests: XCTestCase {
         app.buttons["☀️ Mattina"].tap()
         app.tabBars.buttons["Oggi"].tap()
         XCTAssertTrue(app.staticTexts["☀️ Mattina"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Calendario"].tap()
+        XCTAssertTrue(app.staticTexts["Ore per settimana"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Oggi"].tap()
 
         app.tabBars.buttons["Ore"].tap()
         XCTAssertTrue(app.staticTexts["Ore"].firstMatch.waitForExistence(timeout: 5))

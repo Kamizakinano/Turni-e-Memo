@@ -55,6 +55,14 @@ final class CalcoliTests: XCTestCase {
         XCTAssertEqual(Calcoli.inizioSettimana(ora(25, 23)), ora(19, 0))
     }
 
+    func testSettimaneInteDaLunediADomenicaEKW() {
+        let s = Calcoli.settimane(mese: ora(15, 12))
+        XCTAssertEqual(s.count, 5)
+        XCTAssertEqual(s.first, c.date(from: DateComponents(year: 2026, month: 9, day: 28)))
+        XCTAssertEqual(s.last, ora(26, 0))
+        XCTAssertEqual(s.map(Calcoli.kw), [40, 41, 42, 43, 44])
+    }
+
     func testArchivioSalvaECarica() {
         let turni = [turno(19, 6, 14)]
         Archivio.salva(turni)

@@ -80,6 +80,25 @@ enum Calcoli {
         return (daCal + manuali).sorted { $0.inizio < $1.inizio }
     }
 
+    /// I lunedì delle settimane intere (lunedì–domenica) che toccano il mese.
+    static func settimane(mese: Date) -> [Date] {
+        let c = Calendar.current
+        let inizio = c.date(from: c.dateComponents([.year, .month], from: mese))!
+        let fine = c.date(byAdding: .month, value: 1, to: inizio)!
+        var lunedi = inizioSettimana(inizio)
+        var tutte: [Date] = []
+        while lunedi < fine {
+            tutte.append(lunedi)
+            lunedi = c.date(byAdding: .day, value: 7, to: lunedi)!
+        }
+        return tutte
+    }
+
+    /// Numero della settimana dell'anno (KW), come in Dayforce: la settimana parte il lunedì.
+    static func kw(_ d: Date) -> Int {
+        Calendar(identifier: .iso8601).component(.weekOfYear, from: d)
+    }
+
     /// Settimana (lunedì) che contiene il giorno.
     static func inizioSettimana(_ d: Date) -> Date {
         var c = Calendar(identifier: .gregorian)
