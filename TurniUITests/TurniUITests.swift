@@ -24,7 +24,9 @@ final class TurniUITests: XCTestCase {
         // Turno segnato a mano nel calendario
         app.tabBars.buttons["Calendario"].tap()
         let giorno = Calendar.current.component(.day, from: .now)
-        app.buttons["giorno-\(giorno)"].tap()
+        let cella = app.descendants(matching: .any)["giorno-\(giorno)"].firstMatch
+        XCTAssertTrue(cella.waitForExistence(timeout: 5))
+        cella.tap()
         app.buttons["☀️ Mattina"].tap()
         app.tabBars.buttons["Oggi"].tap()
         XCTAssertTrue(app.staticTexts["☀️ Mattina"].waitForExistence(timeout: 5))

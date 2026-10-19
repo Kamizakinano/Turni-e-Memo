@@ -214,7 +214,6 @@ struct CalendarioView: View {
                         }
                         ForEach(Calcoli.settimane(mese: mese), id: \.self) { lunedi in
                             Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
-                                .accessibilityIdentifier("kw-\(Calcoli.kw(lunedi))")
                             ForEach(0..<7, id: \.self) { i in
                                 cella(Calendar.current.date(byAdding: .day, value: i, to: lunedi)!)
                             }
