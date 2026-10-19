@@ -13,11 +13,13 @@ final class Stato: ObservableObject {
         didSet { UserDefaults.standard.set(scelti, forKey: "calendari"); leggi() }
     }
 
-    private let store = EKEventStore()
+    let store = EKEventStore()
+    /// Turni e memo delle altre persone (calendari "Turni <nome>" condivisi con te).
+    @Published var condivisi: [Persona] = []
 
     init() {
         NotificationCenter.default.addObserver(forName: .EKEventStoreChanged, object: store, queue: .main) { [weak self] _ in
-            Task { @MainActor in self?.leggi() }
+            Task { @MainActor in self?.leggi(); self?.leggiCondivisi() }
         }
     }
 
@@ -32,7 +34,7 @@ final class Stato: ObservableObject {
         if ok && scelti.isEmpty {
             // Prova a trovare da solo il calendario di Dayforce.
             let trovati = store.calendars(for: .event)
-                .filter { $0.title.localizedCaseInsensitiveContains("dayforce") || $0.title.localizedCaseInsensitiveContains("turni") }
+                .filter { $0.title.localizedCaseInsensitiveContains("dayforce") }
                 .map(\.calendarIdentifier)
             if !trovati.isEmpty { scelti = trovati; return }
         }
@@ -40,6 +42,7 @@ final class Stato: ObservableObject {
     }
 
     func leggi() {
+        defer { leggiCondivisi() }
         accesso = EKEventStore.authorizationStatus(for: .event) == .fullAccess
         guard accesso else { return }
         let cals = store.calendars(for: .event).filter { scelti.contains($0.calendarIdentifier) }
@@ -48,7 +51,7 @@ final class Stato: ObservableObject {
         let da = Calendar.current.date(byAdding: .day, value: -70, to: oggi)!
         let a = Calendar.current.date(byAdding: .day, value: 70, to: oggi)!
         let eventi = store.events(matching: store.predicateForEvents(withStart: da, end: a, calendars: cals))
-        let nuovi = eventi.filter { !$0.isAllDay && $0.endDate > $0.startDate }
+        let nuovi = eventi.filter { !$0.isAllDay && $0.endDate > $0.startDate && !Condivisione.èDellApp($0) }
             .map { Turno(id: $0.eventIdentifier ?? UUID().uuidString, inizio: $0.startDate, fine: $0.endDate) }
             .sorted { $0.inizio < $1.inizio }
         if nuovi != daCalendario { daCalendario = nuovi }

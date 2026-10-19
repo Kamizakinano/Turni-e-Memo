@@ -96,6 +96,22 @@ final class CalcoliTests: XCTestCase {
         XCTAssertFalse(Pause.fatta("prova"))
     }
 
+    func testCondivisioneTurnoEMemo() {
+        let t = Turno(id: "a", inizio: ora(19, 6), fine: ora(19, 16), pausaMin: 30)
+        let (letto, _) = Condivisione.leggi(note: Condivisione.noteTurno(t), titolo: Condivisione.titoloTurno(t),
+                                           inizio: t.inizio, fine: t.fine, id: "x")
+        XCTAssertEqual(letto?.pausa, 30)
+        XCTAssertEqual(letto?.ore ?? 0, 9.5, accuracy: 0.0001)
+        let (_, memo) = Condivisione.leggi(note: Condivisione.noteMemo(id: "m1", fatto: true), titolo: "Ritirare pacco",
+                                          inizio: ora(19, 0), fine: ora(19, 23), id: "y")
+        XCTAssertEqual(memo?.testo, "Ritirare pacco")
+        XCTAssertEqual(memo?.fatto, true)
+        // Gli eventi normali (es. Dayforce) non sono dell'app.
+        let (n1, n2) = Condivisione.leggi(note: "Turno lavoro", titolo: "Lavoro", inizio: ora(19, 6), fine: ora(19, 14), id: "z")
+        XCTAssertNil(n1); XCTAssertNil(n2)
+        XCTAssertEqual(Condivisione.nome("Turni Salvo"), "Salvo")
+    }
+
     func testArchivioSalvaECarica() {
         let turni = [turno(19, 6, 14)]
         Archivio.salva(turni)

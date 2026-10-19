@@ -7,6 +7,11 @@ struct ContentView: View {
     @Query var manuali: [TurnoManuale]
     @Query(sort: \Memo.giorno) var memo: [Memo]
     @Environment(\.scenePhase) var fase
+    /// Di chi sono i turni mostrati: nil = i miei, altrimenti l'id del calendario condiviso.
+    @State private var chi: String?
+
+    var persona: Persona? { chi.flatMap { id in stato.condivisi.first { $0.id == id } } }
+    var turniVisti: [Turno] { persona?.turni ?? turni }
 
     var turni: [Turno] {
         Calcoli.unisci(dalCalendario: stato.daCalendario,
@@ -16,9 +21,9 @@ struct ContentView: View {
 
     var body: some View {
         TabView {
-            OggiView(turni: turni)
+            OggiView(turni: turniVisti, nome: persona?.nome, chi: $chi)
                 .tabItem { Label("Oggi", systemImage: "sun.max.fill") }
-            CalendarioView(turni: turni)
+            CalendarioView(turni: turniVisti, nome: persona?.nome, chi: $chi)
                 .tabItem { Label("Calendario", systemImage: "calendar") }
             MemoView()
                 .tabItem { Label("Memo", systemImage: "note.text") }
@@ -28,9 +33,11 @@ struct ContentView: View {
                 .tabItem { Label("Altro", systemImage: "gearshape") }
         }
         .tint(AppColor.ardesia)
-        .onAppear { stato.leggi(); pubblica() }
+        .onAppear { stato.leggi(); pubblica(); sceltaIniziale() }
         .onChange(of: turni) { pubblica() }
-        .onChange(of: memo.map(\.testo)) { pubblica() }
+        .onChange(of: memo.map { "\($0.testo)|\($0.fatto)|\($0.giorno.timeIntervalSince1970)" }) { pubblica() }
+        .onChange(of: stato.condivisi) { sceltaIniziale() }
+        .onReceive(NotificationCenter.default.publisher(for: .condivisioneCambiata)) { _ in pubblica() }
         .onChange(of: fase) { if fase == .active { stato.leggi(); pubblica() } }
     }
 
@@ -38,7 +45,46 @@ struct ContentView: View {
         let oggi = memo.first { !$0.fatto && Calendar.current.isDateInToday($0.giorno) }?.testo
         let avvisi = memo.compactMap { m in m.fatto ? nil : m.avviso.map { (m.uid, m.testo, $0) } }
         stato.pubblica(turni, memoOggi: oggi, memo: avvisi)
+        stato.condividi(turni: turni, memo: memo.map { (id: $0.uid.uuidString, testo: $0.testo, giorno: $0.giorno, fatto: $0.fatto) })
     }
+
+    /// Chi non ha turni suoi (es. chi riceve solo la condivisione) vede subito quelli dell'altra persona.
+    func sceltaIniziale() {
+        if let c = chi, !stato.condivisi.contains(where: { $0.id == c }) { chi = nil }
+        if chi == nil, turni.isEmpty, let p = stato.condivisi.first(where: { !$0.turni.isEmpty }) { chi = p.id }
+    }
+}
+
+/// "I miei" / persona: compare solo se qualcuno ti condivide i suoi turni.
+struct SceltaPersona: View {
+    @EnvironmentObject var stato: Stato
+    @Binding var chi: String?
+
+    var body: some View {
+        let altri = stato.condivisi.filter { !$0.turni.isEmpty }
+        if !altri.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    chip("I miei", scelto: chi == nil) { chi = nil }
+                    ForEach(altri) { p in chip("👤 \(p.nome)", scelto: chi == p.id) { chi = p.id } }
+                }
+            }
+        }
+    }
+
+    func chip(_ t: String, scelto: Bool, azione: @escaping () -> Void) -> some View {
+        Button(action: azione) {
+            Text(t).font(.subheadline.bold())
+                .foregroundStyle(scelto ? .white : .primary)
+                .padding(.horizontal, 14).padding(.vertical, 7)
+                .background(scelto ? AppColor.ardesia : .white, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+extension Notification.Name {
+    static let condivisioneCambiata = Notification.Name("condivisioneCambiata")
 }
 
 // Riquadro bianco con gli angoli arrotondati, come nelle anteprime.
@@ -83,6 +129,10 @@ struct OggiView: View {
     @EnvironmentObject var stato: Stato
     @Query(sort: \Memo.giorno) var memo: [Memo]
     var turni: [Turno]
+    var nome: String?
+    @Binding var chi: String?
+
+    func etichetta(_ t: String) -> String { nome.map { "\($0.uppercased()) · \(t)" } ?? t }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { ctx in
@@ -93,6 +143,7 @@ struct OggiView: View {
                         Text("Oggi").font(.largeTitle.bold())
                         Text(formatoGiorno(ora, "EEEE d MMMM").capitalized).foregroundStyle(.secondary)
                     }
+                    SceltaPersona(chi: $chi)
                     if !stato.accesso {
                         Riquadro {
                             Text("Collega Dayforce").font(.headline)
@@ -116,14 +167,14 @@ struct OggiView: View {
     @ViewBuilder func cartaOggi(_ ora: Date) -> some View {
         let t = Calcoli.inCorso(turni, ora: ora) ?? Calcoli.turno(turni, giorno: ora)
         VStack(alignment: .leading, spacing: 4) {
-            Text(t.map { Calcoli.inCorso(turni, ora: ora) == $0 ? "TURNO IN CORSO" : "TURNO DI OGGI" } ?? "OGGI")
+            Text(etichetta(t.map { Calcoli.inCorso(turni, ora: ora) == $0 ? "TURNO IN CORSO" : "TURNO DI OGGI" } ?? "OGGI"))
                 .font(.footnote.bold()).opacity(0.9)
             if let t {
                 Text("\(t.tipo.emoji) \(t.tipo.nome)").font(.system(size: 30, weight: .heavy))
                 Text("\(t.orario) · \(formatoOre(t.ore)) ore").font(.title3)
                 if t.inizio <= ora && ora < t.fine {
                     Text("Mancano \(durata(t.fine.timeIntervalSince(ora)))").font(.headline)
-                    BottonePausa(turno: t)
+                    if nome == nil { BottonePausa(turno: t) }
                 } else if t.fine <= ora {
                     Text("Turno finito").font(.headline)
                 }
@@ -140,7 +191,7 @@ struct OggiView: View {
     @ViewBuilder func cartaDomani(_ ora: Date) -> some View {
         let t = Calcoli.domani(turni, ora: ora)
         VStack(alignment: .leading, spacing: 4) {
-            Text("DOMANI").font(.footnote.bold()).opacity(0.9)
+            Text(etichetta("DOMANI")).font(.footnote.bold()).opacity(0.9)
             Text(t.map { "\($0.tipo.emoji) \($0.tipo.nome) \($0.orario)" } ?? "😴 Riposo")
                 .font(.title3.weight(.heavy))
         }
@@ -167,9 +218,19 @@ struct OggiView: View {
 
     var memoOggi: some View {
         let oggi = memo.filter { Calendar.current.isDateInToday($0.giorno) }
+        let condivisi = stato.condivisi.flatMap { p in p.memo.filter { Calendar.current.isDateInToday($0.giorno) }.map { (p.nome, $0) } }
         return Riquadro {
             Text("📝 Memo di oggi").font(.headline)
-            if oggi.isEmpty {
+            ForEach(condivisi, id: \.1.id) { coppia in
+                let (chiLoHaScritto, m) = coppia
+                HStack {
+                    Image(systemName: m.fatto ? "checkmark.circle.fill" : "circle").foregroundStyle(.secondary)
+                    Text(m.testo).strikethrough(m.fatto)
+                    Spacer()
+                    Text("da \(chiLoHaScritto)").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            if oggi.isEmpty && condivisi.isEmpty {
                 Text("Nessun memo").font(.subheadline).foregroundStyle(.secondary)
             }
             ForEach(oggi) { m in
@@ -212,6 +273,8 @@ struct CalendarioView: View {
     @Environment(\.modelContext) var contesto
     @Query var manuali: [TurnoManuale]
     var turni: [Turno]
+    var nome: String?
+    @Binding var chi: String?
     @State private var mese = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: .now))!
     @State private var scelto: Giorno?
 
@@ -226,7 +289,8 @@ struct CalendarioView: View {
                     Button { cambia(-1) } label: { Image(systemName: "chevron.left") }
                     Button { cambia(1) } label: { Image(systemName: "chevron.right") }.padding(.leading, 10)
                 }
-                Text("Tocca un giorno per cambiare turno").foregroundStyle(.secondary)
+                SceltaPersona(chi: $chi)
+                Text(nome.map { "Turni di \($0) (solo da vedere)" } ?? "Tocca un giorno per cambiare turno").foregroundStyle(.secondary)
                 Riquadro {
                     LazyVGrid(columns: [GridItem(.fixed(14), spacing: 4)] + Array(repeating: GridItem(spacing: 5), count: 7), spacing: 5) {
                         Color.clear.frame(height: 1)
@@ -258,7 +322,7 @@ struct CalendarioView: View {
         let t = Calcoli.turno(turni, giorno: g)
         let oggi = Calendar.current.isDateInToday(g)
         let fuori = !Calendar.current.isDate(g, equalTo: mese, toGranularity: .month)
-        return Button { scelto = Giorno(id: g) } label: {
+        return Button { if nome == nil { scelto = Giorno(id: g) } } label: {
             VStack(spacing: 1) {
                 Text("\(Calendar.current.component(.day, from: g))").font(.subheadline.bold())
                 Text(t.map { $0.tipo == .mattina ? "MAT" : "POM" } ?? "—").font(.system(size: 9, weight: .bold))
@@ -451,6 +515,7 @@ struct SceltaTurno: View {
 // MARK: - Memo
 
 struct MemoView: View {
+    @EnvironmentObject var stato: Stato
     @Environment(\.modelContext) var contesto
     @Query(sort: \Memo.giorno) var memo: [Memo]
     @State private var nuovo = false
@@ -465,6 +530,19 @@ struct MemoView: View {
                 }
                 if !daFare.isEmpty { Section("Da fare") { ForEach(daFare) { riga($0) } } }
                 if !fatti.isEmpty { Section("Fatti") { ForEach(fatti) { riga($0) } } }
+                ForEach(stato.condivisi.filter { !$0.memo.isEmpty }) { p in
+                    Section("Da \(p.nome) (solo da vedere)") {
+                        ForEach(p.memo) { m in
+                            HStack {
+                                Image(systemName: m.fatto ? "checkmark.circle.fill" : "circle").foregroundStyle(.secondary)
+                                VStack(alignment: .leading) {
+                                    Text(m.testo).strikethrough(m.fatto)
+                                    Text(formatoGiorno(m.giorno, "EEE d MMM")).font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
             }
             .navigationTitle("Memo")
             .toolbar {
@@ -594,6 +672,10 @@ struct OreView: View {
 struct AltroView: View {
     @EnvironmentObject var stato: Stato
     var turni: [Turno]
+    @AppStorage("nome") var nome = ""
+    @AppStorage("condividiTurni") var condividiTurni = false
+    @AppStorage("condividiMemo") var condividiMemo = false
+    @State private var errore: String?
     @AppStorage("mattinaInizio") var mI = 360
     @AppStorage("mattinaFine") var mF = 840
     @AppStorage("pomeriggioInizio") var pI = 840
@@ -622,6 +704,37 @@ struct AltroView: View {
                 }
 
                 Section {
+                    TextField("Il tuo nome (es. Salvo)", text: $nome)
+                    Toggle("Condividi i turni", isOn: attiva($condividiTurni))
+                    Toggle("Condividi i memo", isOn: attiva($condividiMemo))
+                    if let c = stato.calendarioMio, condividiTurni || condividiMemo {
+                        Riga(titolo: "Calendario", valore: "“\(c.title)”")
+                    }
+                    if let e = errore { Text(e).foregroundStyle(.red) }
+                } header: {
+                    Text("Condivisione")
+                } footer: {
+                    Text("L'app scrive turni e/o memo nel calendario iCloud “Turni \(nome.isEmpty ? "<nome>" : nome)”. Per farlo vedere a un'altra persona: app Calendario › Calendari › ⓘ accanto al calendario › Aggiungi persona › la sua email iCloud, togliendo “Consenti modifiche”. Lei accetta l'invito e lo accende qui sotto, nella sua app.")
+                }
+
+                Section {
+                    if stato.calendariDiAltri.isEmpty {
+                        Text(stato.accesso ? "Nessun calendario “Turni …” condiviso con te." : "Prima collega il calendario.").foregroundStyle(.secondary)
+                    }
+                    ForEach(stato.calendariDiAltri, id: \.calendarIdentifier) { cal in
+                        Toggle(cal.title, isOn: Binding(
+                            get: { stato.seguiti.contains(cal.calendarIdentifier) },
+                            set: { on in
+                                var s = stato.seguiti.filter { $0 != cal.calendarIdentifier }
+                                if on { s.append(cal.calendarIdentifier) }
+                                stato.seguiti = s
+                            }))
+                    }
+                } header: {
+                    Text("Condivisi con te")
+                }
+
+                Section {
                     orario("Mattina inizio", $mI)
                     orario("Mattina fine", $mF)
                     orario("Pomeriggio inizio", $pI)
@@ -646,6 +759,24 @@ struct AltroView: View {
             }
             .navigationTitle("Altro")
         }
+    }
+
+    /// Accende la condivisione solo se c'è il nome e il calendario si può creare.
+    func attiva(_ valore: Binding<Bool>) -> Binding<Bool> {
+        Binding(get: { valore.wrappedValue }, set: { on in
+            errore = nil
+            guard on else { valore.wrappedValue = false; return }
+            let n = nome.trimmingCharacters(in: .whitespaces)
+            guard stato.accesso else { errore = "Prima collega il calendario (sezione Turni da Dayforce)."; return }
+            guard !n.isEmpty else { errore = "Scrivi prima il tuo nome."; return }
+            do {
+                _ = try stato.creaCalendario(nome: n)
+                valore.wrappedValue = true
+                NotificationCenter.default.post(name: .condivisioneCambiata, object: nil)
+            } catch {
+                errore = "Non riesco a creare il calendario: \(error.localizedDescription)"
+            }
+        })
     }
 
     func orario(_ titolo: String, _ minuti: Binding<Int>) -> some View {
