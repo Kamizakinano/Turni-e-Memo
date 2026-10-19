@@ -123,6 +123,7 @@ struct OggiView: View {
                 Text("\(t.orario) · \(formatoOre(t.ore)) ore").font(.title3)
                 if t.inizio <= ora && ora < t.fine {
                     Text("Mancano \(durata(t.fine.timeIntervalSince(ora)))").font(.headline)
+                    BottonePausa(turno: t)
                 } else if t.fine <= ora {
                     Text("Turno finito").font(.headline)
                 }
@@ -185,9 +186,29 @@ struct OggiView: View {
     }
 }
 
+struct BottonePausa: View {
+    var turno: Turno
+    @State private var fatta = false
+
+    var body: some View {
+        Button {
+            Pause.segna(turno.id, fatta: !fatta)
+            fatta.toggle()
+        } label: {
+            Label(fatta ? "Pausa fatta" : "Segna la pausa come fatta", systemImage: fatta ? "checkmark.circle.fill" : "cup.and.saucer")
+                .font(.subheadline.bold())
+                .padding(.horizontal, 12).padding(.vertical, 8)
+                .background(.white.opacity(0.25), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .onAppear { fatta = Pause.fatta(turno.id) }
+    }
+}
+
 // MARK: - Calendario
 
 struct CalendarioView: View {
+    @EnvironmentObject var stato: Stato
     @Environment(\.modelContext) var contesto
     @Query var manuali: [TurnoManuale]
     var turni: [Turno]
@@ -228,7 +249,8 @@ struct CalendarioView: View {
         }
         .background(AppColor.sfondo)
         .sheet(item: $scelto) { g in
-            SceltaTurno(giorno: g.id).presentationDetents([.height(330)])
+            SceltaTurno(giorno: g.id, dayforce: Calcoli.turno(stato.daCalendario, giorno: g.id))
+                .presentationDetents([.large])
         }
     }
 
@@ -266,19 +288,40 @@ struct CalendarioView: View {
     }
 
     var orePerSettimana: some View {
-        Riquadro {
+        let settimane = Calcoli.settimane(mese: mese)
+        let fngMese = settimane.filter { Calcoli.fng(turni, lunedi: $0) && Calendar.current.isDate($0.addingTimeInterval(6 * 86400), equalTo: mese, toGranularity: .month) }.count
+        return Riquadro {
             Text("Ore per settimana").font(.headline)
-            ForEach(Calcoli.settimane(mese: mese), id: \.self) { lunedi in
+            ForEach(settimane, id: \.self) { lunedi in
                 let domenica = Calendar.current.date(byAdding: .day, value: 6, to: lunedi)!
                 let fine = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)!
-                HStack {
-                    Text("\(Calcoli.kw(lunedi))").font(.caption.bold()).foregroundStyle(.secondary).frame(width: 22, alignment: .leading)
-                    Text("\(formatoGiorno(lunedi, "d MMM")) – \(formatoGiorno(domenica, "d MMM"))")
-                    Spacer()
-                    Text("\(formatoOre(Calcoli.ore(turni, da: lunedi, a: fine))) h").bold()
+                let ore = Calcoli.ore(turni, da: lunedi, a: fine)
+                let fng = Calcoli.fng(turni, lunedi: lunedi)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("\(Calcoli.kw(lunedi))").font(.caption.bold()).foregroundStyle(.secondary).frame(width: 22, alignment: .leading)
+                        Text("\(formatoGiorno(lunedi, "d MMM")) – \(formatoGiorno(domenica, "d MMM"))")
+                        if fng {
+                            Text("FNG").font(.caption2.weight(.heavy)).foregroundStyle(.white)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(AppColor.fng, in: RoundedRectangle(cornerRadius: 6))
+                        }
+                        Spacer()
+                        Text("\(formatoOre(ore)) h").bold()
+                    }
+                    if !fng, ore >= Calcoli.oreContratto, Calcoli.turno(turni, giorno: domenica) != nil {
+                        Text("Domenica lavorata: mancano \(formatoOre(Calcoli.oreFNG - ore)) h per l'FNG")
+                            .font(.caption).foregroundStyle(.secondary).padding(.leading, 30)
+                    }
                 }
                 .font(.subheadline)
+                .padding(.vertical, 4).padding(.horizontal, fng ? 6 : 0)
+                .background(fng ? AppColor.fng.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 10))
             }
+            Divider()
+            Riga(titolo: "FNG nel mese", valore: "\(fngMese)")
+            Text("L'FNG scatta se nella settimana lavori la domenica e fai almeno \(formatoOre(Calcoli.oreFNG)) ore pagate (senza pause).")
+                .font(.caption).foregroundStyle(.secondary)
         }
     }
 
@@ -296,30 +339,98 @@ struct SceltaTurno: View {
     @AppStorage("pomeriggioInizio") var pI = 840
     @AppStorage("pomeriggioFine") var pF = 1320
     var giorno: Date
+    /// Il turno di Dayforce di quel giorno, se c'è.
+    var dayforce: Turno?
+
+    @State private var riposo = false
+    @State private var inizio = Date.now
+    @State private var fine = Date.now
+    @State private var pausa = Turno.pausaMinima
+    @State private var pronto = false
+
+    var fineVera: Date { fine > inizio ? fine : fine.addingTimeInterval(86400) }
+    var anteprima: Turno { Turno(id: "x", inizio: inizio, fine: fineVera, pausaMin: pausa) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(formatoGiorno(giorno, "EEEE d MMMM").capitalized).font(.title2.bold())
-            HStack(spacing: 8) {
-                bottone("☀️ Mattina", AppColor.mattina, .white) { metti(riposo: false, mI, mF) }
-                bottone("🌙 Pomeriggio", AppColor.pomeriggio, .white) { metti(riposo: false, pI, pF) }
-                bottone("😴 Riposo", AppColor.riposo, .primary) { metti(riposo: true, 0, 0) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(formatoGiorno(giorno, "EEEE d MMMM").capitalized).font(.title2.bold())
+                HStack(spacing: 8) {
+                    bottone("☀️ Mattina", AppColor.mattina, .white, scelto: !riposo && anteprima.tipo == .mattina) { imposta(mI, mF) }
+                    bottone("🌙 Pomeriggio", AppColor.pomeriggio, .white, scelto: !riposo && anteprima.tipo == .pomeriggio) { imposta(pI, pF) }
+                    bottone("😴 Riposo", AppColor.riposo, .primary, scelto: riposo) { riposo = true }
+                }
+                if !riposo {
+                    Riquadro {
+                        DatePicker("Inizio", selection: $inizio, displayedComponents: .hourAndMinute)
+                        Divider()
+                        HStack {
+                            DatePicker(selection: $fine, displayedComponents: .hourAndMinute) {
+                                HStack(spacing: 6) {
+                                    Text("Fine")
+                                    if let extra = straordinario { Text(extra).font(.caption.bold()).foregroundStyle(.orange) }
+                                }
+                            }
+                        }
+                        Divider()
+                        Stepper("Pausa (non pagata): \(pausa) min", value: $pausa, in: Turno.pausaMinima...180, step: 1)
+                        Divider()
+                        Riga(titolo: "Ore pagate", valore: durata(anteprima.ore * 3600))
+                    }
+                }
+                Text(dayforce.map { "Dayforce dice \($0.orario). La modifica vale solo per questo giorno." } ?? "Nessun turno di Dayforce in questo giorno.")
+                    + Text(" La pausa minima è di \(Turno.pausaMinima) minuti.")
+                Button { salva() } label: {
+                    Text("Salva").bold().foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 48)
+                        .background(AppColor.ardesia, in: RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+                Button("Torna all'orario di Dayforce") { togli(); chiudi() }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 14))
             }
-            Button("Usa l'orario di Dayforce") { togli(); chiudi() }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(AppColor.sfondo, in: RoundedRectangle(cornerRadius: 12))
-            Text("Il turno segnato a mano vale al posto di quello di Dayforce per questo giorno. Gli orari si cambiano in Altro.")
-                .font(.footnote).foregroundStyle(.secondary)
+            .font(.subheadline)
+            .padding(20)
         }
-        .padding(20)
+        .background(AppColor.sfondo)
+        .onAppear(perform: carica)
     }
 
-    func bottone(_ t: String, _ sfondo: Color, _ testo: Color, azione: @escaping () -> Void) -> some View {
+    var straordinario: String? {
+        guard let d = dayforce else { return nil }
+        let diff = fineVera.timeIntervalSince(d.fine) + d.inizio.timeIntervalSince(inizio)
+        return diff > 59 ? "+\(durata(diff)) straord." : nil
+    }
+
+    func carica() {
+        guard !pronto else { return }
+        pronto = true
+        if let m = manuali.first(where: { Calendar.current.isDate($0.giorno, inSameDayAs: giorno) }) {
+            riposo = m.riposo
+            inizio = m.inizio
+            fine = m.fine
+            pausa = max(Turno.pausaMinima, m.pausa)
+            if m.riposo { imposta(mI, mF); riposo = true }
+        } else if let d = dayforce {
+            inizio = d.inizio
+            fine = d.fine
+        } else {
+            imposta(mI, mF)
+        }
+    }
+
+    func imposta(_ da: Int, _ a: Int) {
+        riposo = false
+        inizio = data(giorno, minuti: da)
+        fine = data(giorno, minuti: a > da ? a : a + 1440)
+    }
+
+    func bottone(_ t: String, _ sfondo: Color, _ testo: Color, scelto: Bool, azione: @escaping () -> Void) -> some View {
         Button(action: azione) {
             Text(t).font(.subheadline.bold()).foregroundStyle(testo)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(sfondo, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(.black, lineWidth: scelto ? 3 : 0))
         }
         .buttonStyle(.plain)
     }
@@ -328,10 +439,11 @@ struct SceltaTurno: View {
         for m in manuali where Calendar.current.isDate(m.giorno, inSameDayAs: giorno) { contesto.delete(m) }
     }
 
-    func metti(riposo: Bool, _ inizio: Int, _ fine: Int) {
+    func salva() {
         togli()
-        let f = fine > inizio ? fine : fine + 1440
-        contesto.insert(TurnoManuale(giorno: giorno, riposo: riposo, inizio: data(giorno, minuti: inizio), fine: data(giorno, minuti: f)))
+        let m = TurnoManuale(giorno: giorno, riposo: riposo, inizio: inizio, fine: fineVera)
+        m.pausa = pausa
+        contesto.insert(m)
         chiudi()
     }
 }

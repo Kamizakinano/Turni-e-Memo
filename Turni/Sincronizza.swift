@@ -97,7 +97,8 @@ enum Avvisi {
     static func programma(_ turni: [Turno], memo: [(UUID, String, Date)], ora: Date = .now) {
         let centro = UNUserNotificationCenter.current()
         centro.getPendingNotificationRequests { vecchi in
-            centro.removePendingNotificationRequests(withIdentifiers: vecchi.map(\.identifier))
+            // Gli avvisi di fine pausa restano: li ha chiesti l'utente.
+            centro.removePendingNotificationRequests(withIdentifiers: vecchi.map(\.identifier).filter { !$0.hasPrefix("fine-pausa-") })
             let limite = ora.addingTimeInterval(14 * 86400)
             for t in turni where t.inizio > ora && t.inizio < limite {
                 let c = UNMutableNotificationContent()
@@ -105,6 +106,17 @@ enum Avvisi {
                 c.body = "\(t.orario). Apri l'app per il conto alla rovescia sulla schermata di blocco."
                 c.sound = .default
                 aggiungi(centro, "turno-\(t.id)", c, t.inizio)
+            }
+            for t in turni where !Pause.fatta(t.id) {
+                let quando = t.inizio.addingTimeInterval(Pause.dopoOre * 3600)
+                guard quando > ora, quando < t.fine, quando < limite else { continue }
+                let c = UNMutableNotificationContent()
+                c.title = "☕ Sono \(Int(Pause.dopoOre)) ore che lavori"
+                c.body = "Non hai ancora fatto la pausa (minimo \(Turno.pausaMinima) min)."
+                c.sound = .default
+                c.categoryIdentifier = "PAUSA"
+                c.userInfo = ["turno": t.id]
+                aggiungi(centro, "pausa-\(t.id)", c, quando)
             }
             for (id, testo, quando) in memo where quando > ora {
                 let c = UNMutableNotificationContent()

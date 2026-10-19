@@ -20,9 +20,12 @@ final class CalcoliTests: XCTestCase {
     }
 
     func testOre() {
-        XCTAssertEqual(Turno(id: "a", inizio: ora(19, 6), fine: ora(19, 14, 30)).ore, 8.5)
+        // Ore pagate: si tolgono sempre almeno 11 minuti di pausa.
+        XCTAssertEqual(Turno(id: "a", inizio: ora(19, 6), fine: ora(19, 14, 11)).ore, 8, accuracy: 0.0001)
+        XCTAssertEqual(Turno(id: "a", inizio: ora(19, 6), fine: ora(19, 14), pausaMin: 10).ore, 469.0 / 60, accuracy: 0.0001)
+        XCTAssertEqual(Turno(id: "a", inizio: ora(19, 6), fine: ora(19, 15), pausaMin: 60).ore, 8, accuracy: 0.0001)
         let turni = [turno(19, 6, 14), turno(20, 14, 22), turno(27, 6, 14)]
-        XCTAssertEqual(Calcoli.ore(turni, da: ora(19, 0), a: ora(26, 0)), 16)
+        XCTAssertEqual(Calcoli.ore(turni, da: ora(19, 0), a: ora(26, 0)), 16 - 22.0 / 60, accuracy: 0.0001)
     }
 
     func testInCorsoProssimoEDomani() {
@@ -61,6 +64,36 @@ final class CalcoliTests: XCTestCase {
         XCTAssertEqual(s.first, c.date(from: DateComponents(year: 2026, month: 9, day: 28)))
         XCTAssertEqual(s.last, ora(26, 0))
         XCTAssertEqual(s.map(Calcoli.kw), [40, 41, 42, 43, 44])
+    }
+
+    // Settimana 19–25 ottobre 2026 (domenica 25).
+    func settimana(_ fine: Int, domenica: Bool) -> [Turno] {
+        var t = (19...23).map { Turno(id: "\($0)", inizio: ora($0, 6), fine: ora($0, fine)) }
+        if domenica { t.append(Turno(id: "25", inizio: ora(25, 6), fine: ora(25, fine))) }
+        return t
+    }
+
+    func testFNGServonoDomenicaE44OrePagate() {
+        let lunedi = ora(19, 0)
+        // 6 turni da 8h11m = 48 ore pagate, con la domenica: FNG.
+        XCTAssertTrue(Calcoli.fng(settimana(14, domenica: true).map { var x = $0; x.fine = x.fine.addingTimeInterval(660); return x }, lunedi: lunedi))
+        // 5 turni da 9h11m = 45 ore pagate ma senza domenica: niente FNG.
+        XCTAssertFalse(Calcoli.fng(settimana(15, domenica: false).map { var x = $0; x.fine = x.fine.addingTimeInterval(660); return x }, lunedi: lunedi))
+        // Con la domenica ma solo 5 turni da 8h (39h05m pagate): niente FNG.
+        let poche = (19...22).map { Turno(id: "\($0)", inizio: ora($0, 6), fine: ora($0, 14)) } + [Turno(id: "25", inizio: ora(25, 6), fine: ora(25, 14))]
+        XCTAssertFalse(Calcoli.fng(poche, lunedi: lunedi))
+        // Esattamente 44 ore pagate con la domenica: FNG.
+        let giuste = (19...22).map { Turno(id: "\($0)", inizio: ora($0, 6), fine: ora($0, 15, 11)) }
+            + [Turno(id: "25", inizio: ora(25, 6), fine: ora(25, 14, 11))]
+        XCTAssertEqual(Calcoli.ore(giuste, da: lunedi, a: ora(26, 0)), 44, accuracy: 0.0001)
+        XCTAssertTrue(Calcoli.fng(giuste, lunedi: lunedi))
+    }
+
+    func testPausaFatta() {
+        Pause.segna("prova", fatta: true)
+        XCTAssertTrue(Pause.fatta("prova"))
+        Pause.segna("prova", fatta: false)
+        XCTAssertFalse(Pause.fatta("prova"))
     }
 
     func testArchivioSalvaECarica() {

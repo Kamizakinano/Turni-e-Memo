@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UserNotifications
 
 // Tipo di turno: si capisce dall'ora di inizio (prima delle 12 = mattina).
 enum TipoTurno: String, Codable, CaseIterable {
@@ -20,9 +21,16 @@ struct Turno: Codable, Hashable, Identifiable {
     var inizio: Date
     var fine: Date
     var manuale: Bool = false
+    /// Pausa non pagata in minuti (se manca vale quella minima).
+    var pausaMin: Int? = nil
+
+    /// La pausa non pagata è di almeno 11 minuti per turno, anche se Dayforce ne segna 10.
+    static let pausaMinima = 11
+    var pausa: Int { max(Turno.pausaMinima, pausaMin ?? 0) }
 
     var tipo: TipoTurno { .da(inizio: inizio) }
-    var ore: Double { max(0, fine.timeIntervalSince(inizio)) / 3600 }
+    /// Ore pagate: durata del turno meno la pausa.
+    var ore: Double { max(0, fine.timeIntervalSince(inizio) - Double(pausa * 60)) / 3600 }
 
     var orario: String { "\(Turno.ora(inizio)) – \(Turno.ora(fine))" }
 
@@ -38,6 +46,7 @@ enum AppColor {
     static let ardesia = Color(red: 0x5D / 255, green: 0x75 / 255, blue: 0x84 / 255)
     static let mattina = Color(red: 1, green: 0xB5 / 255, blue: 0x47 / 255)
     static let pomeriggio = ardesia
+    static let fng = Color(red: 0x2E / 255, green: 0x9D / 255, blue: 0x5B / 255)
     static let riposo = Color(red: 0xCF / 255, green: 0xD6 / 255, blue: 0xDC / 255)
     static let sfondo = Color(red: 0xF4 / 255, green: 0xF6 / 255, blue: 0xF8 / 255)
 }
@@ -80,6 +89,17 @@ enum Calcoli {
         return (daCal + manuali).sorted { $0.inizio < $1.inizio }
     }
 
+    static let oreContratto = 40.0
+    static let oreFNG = 44.0
+
+    /// Bonus FNG: nella settimana (lunedì–domenica) hai lavorato la domenica e fatto almeno 44 ore pagate.
+    static func fng(_ turni: [Turno], lunedi: Date) -> Bool {
+        let c = Calendar.current
+        guard let domenica = c.date(byAdding: .day, value: 6, to: lunedi),
+              let fine = c.date(byAdding: .day, value: 7, to: lunedi) else { return false }
+        return turno(turni, giorno: domenica) != nil && ore(turni, da: lunedi, a: fine) >= oreFNG - 0.001
+    }
+
     /// I lunedì delle settimane intere (lunedì–domenica) che toccano il mese.
     static func settimane(mese: Date) -> [Date] {
         let c = Calendar.current
@@ -105,6 +125,25 @@ enum Calcoli {
         c.firstWeekday = 2
         c.timeZone = .current
         return c.dateInterval(of: .weekOfYear, for: d)?.start ?? c.startOfDay(for: d)
+    }
+}
+
+// Pause già fatte, per non mandare l'avviso dopo 5 ore.
+enum Pause {
+    static let dopoOre = 5.0
+
+    static func fatta(_ id: String) -> Bool {
+        (Archivio.defaults.stringArray(forKey: "pauseFatte") ?? []).contains(id)
+    }
+
+    static func segna(_ id: String, fatta: Bool) {
+        var tutte = Archivio.defaults.stringArray(forKey: "pauseFatte") ?? []
+        tutte.removeAll { $0 == id }
+        if fatta {
+            tutte.append(id)
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["pausa-\(id)"])
+        }
+        Archivio.defaults.set(Array(tutte.suffix(200)), forKey: "pauseFatte")
     }
 }
 

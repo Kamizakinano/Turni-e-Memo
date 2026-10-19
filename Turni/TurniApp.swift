@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct TurniApp: App {
     @StateObject private var stato = Stato()
+    @UIApplicationDelegateAdaptor(Delegato.self) var delegato
 
     var body: some Scene {
         WindowGroup {
@@ -11,6 +13,41 @@ struct TurniApp: App {
                 .environmentObject(stato)
         }
         .modelContainer(for: [TurnoManuale.self, Memo.self])
+    }
+}
+
+// Riceve i tocchi sui pulsanti degli avvisi ("Fatta", "Inizio ora").
+final class Delegato: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        let centro = UNUserNotificationCenter.current()
+        centro.delegate = self
+        let fatta = UNNotificationAction(identifier: "FATTA", title: "✅ Fatta")
+        let inizio = UNNotificationAction(identifier: "INIZIO", title: "⏱ Inizio ora")
+        centro.setNotificationCategories([UNNotificationCategory(identifier: "PAUSA", actions: [fatta, inizio], intentIdentifiers: [])])
+        return true
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let id = response.notification.request.content.userInfo["turno"] as? String ?? ""
+        guard !id.isEmpty else { return }
+        switch response.actionIdentifier {
+        case "FATTA":
+            Pause.segna(id, fatta: true)
+        case "INIZIO":
+            Pause.segna(id, fatta: true)
+            let c = UNMutableNotificationContent()
+            c.title = "☕ Pausa finita"
+            c.body = "Sono passati \(Turno.pausaMinima) minuti."
+            c.sound = .default
+            try? await center.add(UNNotificationRequest(identifier: "fine-pausa-\(id)", content: c,
+                trigger: UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(Turno.pausaMinima * 60), repeats: false)))
+        default:
+            break
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound]
     }
 }
 
@@ -22,6 +59,7 @@ final class TurnoManuale {
     var riposo: Bool = false
     var inizio: Date = Date.now
     var fine: Date = Date.now
+    var pausa: Int = 11
 
     init(giorno: Date, riposo: Bool, inizio: Date, fine: Date) {
         self.giorno = Calendar.current.startOfDay(for: giorno)
@@ -31,7 +69,7 @@ final class TurnoManuale {
     }
 
     var turno: Turno {
-        Turno(id: "m-\(Int(giorno.timeIntervalSince1970))", inizio: inizio, fine: fine, manuale: true)
+        Turno(id: "m-\(Int(giorno.timeIntervalSince1970))", inizio: inizio, fine: fine, manuale: true, pausaMin: pausa)
     }
 }
 
