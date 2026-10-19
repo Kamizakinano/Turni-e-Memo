@@ -125,6 +125,16 @@ final class CalcoliTests: XCTestCase {
         XCTAssertEqual(Calcoli.senzaDoppioni([a, b, turno(20, 14, 22)]).count, 2)
     }
 
+    func testDueCalendariAccesiNonSiSommano() {
+        // Prima Dayforce, poi SuperShift con gli stessi giorni (orari un po' diversi) e un calendario personale.
+        let dayforce = [turno(19, 6, 14), turno(20, 14, 22)]
+        let supershift = [Turno(id: "s1", inizio: ora(19, 6), fine: ora(19, 14, 11)), turno(21, 6, 14)]
+        let personale = [Turno(id: "dentista", inizio: ora(22, 16), fine: ora(22, 17)),
+                         Turno(id: "ferie", inizio: ora(23, 0), fine: ora(26, 0))]
+        let turni = Calcoli.soloTurni(dayforce + supershift + personale)
+        XCTAssertEqual(turni.map(\.id), ["19-6", "20-14", "21-6"])
+    }
+
     func testTurnoDaConfermare() {
         let turni = [turno(18, 6, 14), turno(19, 5, 13)]
         // Durante il turno di oggi c'è da confermare quello di ieri.

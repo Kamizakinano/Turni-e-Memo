@@ -49,15 +49,24 @@ final class Stato: ObservableObject {
         guard !cals.isEmpty else { daCalendario = []; return }
         let oggi = Calendar.current.startOfDay(for: .now)
         // Anche i turni passati (fino a 2 anni), letti un anno alla volta: EventKit cerca al massimo 4 anni per volta.
-        var eventi: [EKEvent] = []
-        for anno in [-730, -365, 0] {
-            let da = Calendar.current.date(byAdding: .day, value: anno, to: oggi)!
-            let a = Calendar.current.date(byAdding: .day, value: anno == 0 ? 120 : 365, to: da)!
-            eventi += store.events(matching: store.predicateForEvents(withStart: da, end: a, calendars: cals))
+        // Il calendario di Dayforce viene prima: se un giorno ha turni in più calendari, vale il suo.
+        let ordinati = cals.sorted { a, b in
+            let da = a.title.localizedCaseInsensitiveContains("dayforce"), db = b.title.localizedCaseInsensitiveContains("dayforce")
+            return da != db ? da : a.title < b.title
         }
-        let nuovi = eventi.filter { !$0.isAllDay && $0.endDate > $0.startDate && !Condivisione.èDellApp($0) }
-            .map { Turno(id: $0.eventIdentifier ?? UUID().uuidString, inizio: $0.startDate, fine: $0.endDate) }
-        let senza = Calcoli.senzaDoppioni(nuovi)
+        var nuovi: [Turno] = []
+        for cal in ordinati {
+            var eventi: [EKEvent] = []
+            for anno in [-730, -365, 0] {
+                let da = Calendar.current.date(byAdding: .day, value: anno, to: oggi)!
+                let a = Calendar.current.date(byAdding: .day, value: anno == 0 ? 120 : 365, to: da)!
+                eventi += store.events(matching: store.predicateForEvents(withStart: da, end: a, calendars: [cal]))
+            }
+            nuovi += eventi.filter { !$0.isAllDay && !Condivisione.èDellApp($0) }
+                .sorted { $0.startDate < $1.startDate }
+                .map { Turno(id: $0.eventIdentifier ?? UUID().uuidString, inizio: $0.startDate, fine: $0.endDate) }
+        }
+        let senza = Calcoli.soloTurni(nuovi)
         if senza != daCalendario { daCalendario = senza }
     }
 

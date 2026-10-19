@@ -88,6 +88,18 @@ enum Calcoli {
         }
     }
 
+    /// Tiene solo gli eventi che sembrano turni (da 2 a 14 ore) e al massimo un turno per giorno:
+    /// se più calendari accesi hanno qualcosa nello stesso giorno, vale il primo (il calendario di Dayforce va messo per primo).
+    static func soloTurni(_ inOrdine: [Turno], cal c: Calendar = .current) -> [Turno] {
+        var giorni = Set<Date>()
+        return inOrdine.filter { t in
+            let h = t.fine.timeIntervalSince(t.inizio) / 3600
+            guard h >= 2 && h <= 14 else { return false }
+            return giorni.insert(c.startOfDay(for: t.inizio)).inserted
+        }
+        .sorted { $0.inizio < $1.inizio }
+    }
+
     /// Unisce i turni del calendario con quelli segnati a mano:
     /// nei giorni segnati a mano vale la scelta manuale (anche "riposo", che toglie il turno).
     static func unisci(dalCalendario cal: [Turno], manuali: [Turno], riposi: [Date],
