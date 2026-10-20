@@ -224,9 +224,14 @@ enum Archivio {
         if let d = try? JSONEncoder().encode(turni) { defaults.set(d, forKey: "turni") }
     }
 
-    static func carica() -> [Turno] {
-        guard let d = defaults.data(forKey: "turni") else { return [] }
+    static func carica(_ chiave: String = "turni") -> [Turno] {
+        guard let d = defaults.data(forKey: chiave) else { return [] }
         return (try? JSONDecoder().decode([Turno].self, from: d)) ?? []
+    }
+
+    /// I turni così come arrivano da Dayforce, senza le modifiche a mano: servono per accorgersi dei cambi veri.
+    static func salvaDayforce(_ turni: [Turno]) {
+        if let d = try? JSONEncoder().encode(turni) { defaults.set(d, forKey: "dayforce") }
     }
 }
 

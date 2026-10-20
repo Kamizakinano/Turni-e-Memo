@@ -7,7 +7,9 @@ import UserNotifications
 // Legge i turni di Dayforce dal Calendario dell'iPhone e aggiorna widget, conto alla rovescia e avvisi.
 @MainActor
 final class Stato: ObservableObject {
-    @Published var daCalendario: [Turno] = Archivio.carica().filter { !$0.manuale }
+    // Si parte dall'ultima lettura di Dayforce (non dai turni uniti alle modifiche a mano,
+    // altrimenti i giorni modificati sembravano "cambiati" a ogni apertura e arrivavano tanti avvisi).
+    @Published var daCalendario: [Turno] = Archivio.carica("dayforce")
     @Published var accesso = EKEventStore.authorizationStatus(for: .event) == .fullAccess
     @Published var scelti: [String] = UserDefaults.standard.stringArray(forKey: "calendari") ?? [] {
         didSet { UserDefaults.standard.set(scelti, forKey: "calendari"); ignoraCambi = true; leggi() }
@@ -72,6 +74,7 @@ final class Stato: ObservableObject {
         if senza != daCalendario {
             if !ignoraCambi && !daCalendario.isEmpty { registraCambi(prima: daCalendario, dopo: senza) }
             daCalendario = senza
+            Archivio.salvaDayforce(senza)
         }
         ignoraCambi = false
     }
