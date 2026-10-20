@@ -108,10 +108,15 @@ struct Riga: View {
     }
 }
 
+/// Un DateFormatter per ogni formato, creato una volta sola (crearli ogni volta rallenta lo scorrimento).
+private var formatiGiorno: [String: DateFormatter] = [:]
+
 func formatoGiorno(_ d: Date, _ formato: String) -> String {
+    if let f = formatiGiorno[formato] { return f.string(from: d) }
     let f = DateFormatter()
     f.locale = Locale(identifier: "it_IT")
     f.dateFormat = formato
+    formatiGiorno[formato] = f
     return f.string(from: d)
 }
 
@@ -391,6 +396,13 @@ struct CalendarioView: View {
     struct Giorno: Identifiable { var id: Date }
 
     var body: some View {
+        // Turni e ferie del mese visibile, cercati una volta sola invece che in ogni casella.
+        let settimane = Calcoli.settimane(mese: mese)
+        let da = settimane.first ?? mese
+        let a = Calendar.current.date(byAdding: .day, value: 7 * settimane.count, to: da)!
+        let mappa = Dictionary(turni.filter { $0.inizio >= da && $0.inizio < a }.map { (Calendar.current.startOfDay(for: $0.inizio), $0) },
+                               uniquingKeysWith: { x, y in x.inizio <= y.inizio ? x : y })
+        let ferie = Set(manuali.filter { $0.codice == "FER" }.map { Calendar.current.startOfDay(for: $0.giorno) })
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
@@ -407,11 +419,11 @@ struct CalendarioView: View {
                         ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
                             Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
                         }
-                        ForEach(Calcoli.settimane(mese: mese), id: \.self) { lunedi in
+                        ForEach(settimane, id: \.self) { lunedi in
                             Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
                             // Ogni giorno ha come id la sua data, così nessuna cella si ripete.
                             ForEach((0..<7).map { Calendar.current.date(byAdding: .day, value: $0, to: lunedi)! }, id: \.self) { g in
-                                cella(g)
+                                cella(g, mappa[g], ferie: ferie.contains(g))
                             }
                         }
                     }
@@ -428,8 +440,7 @@ struct CalendarioView: View {
         }
     }
 
-    func cella(_ g: Date) -> some View {
-        let t = Calcoli.turno(turni, giorno: g)
+    func cella(_ g: Date, _ t: Turno?, ferie: Bool) -> some View {
         let oggi = Calendar.current.isDateInToday(g)
         let fuori = !Calendar.current.isDate(g, equalTo: mese, toGranularity: .month)
         return Button { if nome == nil { scelto = Giorno(id: g) } } label: {
@@ -443,7 +454,7 @@ struct CalendarioView: View {
                     Text("\(Turno.ora(t.inizio))\n\(Turno.ora(t.fine))")
                         .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
                         .lineLimit(2).minimumScaleFactor(0.7)
-                } else if manuali.contains(where: { $0.codice == "FER" && Calendar.current.isDate($0.giorno, inSameDayAs: g) }) {
+                } else if ferie {
                     Text("🏖️\nferie").font(.system(size: 9, weight: .bold))
                 } else {
                     Text("—\n ").font(.system(size: 9, weight: .bold))

@@ -41,12 +41,15 @@ struct Turno: Codable, Hashable, Identifiable {
 
     var orario: String { "\(Turno.ora(inizio)) – \(Turno.ora(fine))" }
 
-    static func ora(_ d: Date) -> String {
+    // Creare un DateFormatter è lento: se ne usa sempre lo stesso.
+    private static let formatoOra: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "it_IT")
         f.dateFormat = "HH:mm"
-        return f.string(from: d)
-    }
+        return f
+    }()
+
+    static func ora(_ d: Date) -> String { formatoOra.string(from: d) }
 }
 
 enum AppColor {
