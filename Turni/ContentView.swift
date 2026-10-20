@@ -96,7 +96,8 @@ struct Riquadro<C: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(14)
             .background(.white, in: RoundedRectangle(cornerRadius: 18))
-            .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
+            // Bordo sottile al posto dell'ombra: l'ombra va ridisegnata a ogni scorrimento e rallenta.
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(.black.opacity(0.05), lineWidth: 1))
     }
 }
 
@@ -414,16 +415,21 @@ struct CalendarioView: View {
                 SceltaPersona(chi: $chi)
                 Text(nome.map { "Turni di \($0) (solo da vedere)" } ?? "Tocca un giorno per cambiare turno").foregroundStyle(.secondary)
                 Riquadro {
-                    LazyVGrid(columns: [GridItem(.fixed(14), spacing: 4)] + Array(repeating: GridItem(spacing: 5), count: 7), spacing: 5) {
-                        Color.clear.frame(height: 1)
-                        ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
-                            Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
+                    // Griglia fissa (non "pigra"): le caselle si disegnano una volta sola, non durante lo scorrimento.
+                    Grid(horizontalSpacing: 5, verticalSpacing: 5) {
+                        GridRow {
+                            Color.clear.frame(width: 14, height: 1)
+                            ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
+                                Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
+                            }
                         }
                         ForEach(settimane, id: \.self) { lunedi in
-                            Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
-                            // Ogni giorno ha come id la sua data, così nessuna cella si ripete.
-                            ForEach((0..<7).map { Calendar.current.date(byAdding: .day, value: $0, to: lunedi)! }, id: \.self) { g in
-                                cella(g, mappa[g], ferie: ferie.contains(g))
+                            GridRow {
+                                Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                                    .frame(width: 14)
+                                ForEach((0..<7).map { Calendar.current.date(byAdding: .day, value: $0, to: lunedi)! }, id: \.self) { g in
+                                    cella(g, mappa[g], ferie: ferie.contains(g))
+                                }
                             }
                         }
                     }
@@ -449,11 +455,11 @@ struct CalendarioView: View {
                 if let t, t.assenza {
                     Text("\(t.codice ?? "")\n\(oreMinuti(t.ore))")
                         .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
-                        .lineLimit(2).minimumScaleFactor(0.6)
+                        .lineLimit(2)
                 } else if let t {
                     Text("\(Turno.ora(t.inizio))\n\(Turno.ora(t.fine))")
                         .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
-                        .lineLimit(2).minimumScaleFactor(0.7)
+                        .lineLimit(2)
                 } else if ferie {
                     Text("🏖️\nferie").font(.system(size: 9, weight: .bold))
                 } else {
