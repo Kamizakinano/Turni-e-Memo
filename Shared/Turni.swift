@@ -37,7 +37,7 @@ struct Turno: Codable, Hashable, Identifiable {
     var ore: Double { orePagate ?? max(0, fine.timeIntervalSince(inizio) - Double(pausa * 60)) / 3600 }
 
     /// Festività o permesso: ore pagate ma non è un turno vero.
-    var assenza: Bool { codice == "FE" || codice == "PE" }
+    var assenza: Bool { codice == "FE" || codice == "PE" || codice == "FER" }
 
     var orario: String { "\(Turno.ora(inizio)) – \(Turno.ora(fine))" }
 

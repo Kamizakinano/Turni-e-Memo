@@ -30,13 +30,14 @@ enum SuperShift {
     static let settimana = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"]   // come Calendar.weekday (1 = domenica)
 
     static func nome(_ codice: String) -> String {
-        ["MA": "☀️ Mattine", "PO": "🌙 Pomeriggi", "RI": "😴 Riposi", "MI": "🚗 Missioni", "FE": "🎉 Festività", "PE": "📄 Permessi"][codice] ?? codice
+        ["MA": "☀️ Mattine", "PO": "🌙 Pomeriggi", "RI": "😴 Riposi", "MI": "🚗 Missioni", "FE": "🎉 Festività", "PE": "📄 Permessi",
+         "FER": "🏖️ Ferie", "FO": "🎓 Formazione"][codice] ?? codice
     }
 
     static func colore(_ g: GiornoImportato) -> Color {
         switch g.codice {
         case "RI": return AppColor.riposo
-        case "FE", "PE": return AppColor.fng
+        case "FE", "PE", "FER": return AppColor.fng
         case "MI": return .purple
         default: return TipoTurno.da(inizio: g.inizio).colore
         }
@@ -62,7 +63,7 @@ enum SuperShift {
     /// Legge il testo del PDF. Funziona anche se le colonne arrivano in ordine diverso (es. "05 : 20" o la pausa dopo le ore):
     /// per ogni giorno prende il primo orario, la prima pausa e le prime ore che trova prima del giorno dopo.
     static func leggi(_ testo: String, calendario c: Calendar = .current) -> [GiornoImportato] {
-        let intestazioni = "(" + mesi.joined(separator: "|") + ")\\s+(20\\d\\d)|(\\d{1,2})\\s+(Lun|Mar|Mer|Gio|Ven|Sab|Dom)\\s+(MA|PO|RI|MI|FE|PE)\\b"
+        let intestazioni = "(" + mesi.joined(separator: "|") + ")\\s+(20\\d\\d)|(\\d{1,2})\\s+(Lun|Mar|Mer|Gio|Ven|Sab|Dom)\\s+(MA|PO|RI|MI|FE|PE|[a-z]{1,2})\\b"
         guard let reH = try? NSRegularExpression(pattern: intestazioni),
               let reOrario = try? NSRegularExpression(pattern: "(\\d{2})\\s*:?\\s*(\\d{2})\\s*-\\s*(\\d{2})\\s*:?\\s*(\\d{2})"),
               let reOre = try? NSRegularExpression(pattern: "(\\d+)\\s*h(?:\\s*(\\d+)\\s*min)?"),
@@ -88,7 +89,7 @@ enum SuperShift {
             }
             guard anno > 0, let g = n(m, 3) else { continue }
             let nomeGiorno = ns.substring(with: m.range(at: 4))
-            let codice = ns.substring(with: m.range(at: 5))
+            var codice = ns.substring(with: m.range(at: 5))
             // Se il numero del giorno torna indietro senza intestazione, è il mese dopo.
             if g < ultimoGiorno { numMese += 1; if numMese > 12 { numMese = 1; anno += 1 } }
             ultimoGiorno = g
@@ -105,6 +106,11 @@ enum SuperShift {
             let orario = reOrario.firstMatch(in: testo, range: blocco)
             let ore = reOre.firstMatch(in: testo, range: blocco)
             let pausa = rePausa.firstMatch(in: testo, range: blocco)
+            // Alcuni giorni hanno una sigla minuscola (es. "g", "h"): il tipo si capisce dal titolo (FERIE, FORMAZIONE…).
+            if codice.first?.isLowercase == true, let o = orario {
+                let titolo = titoloNota(ns.substring(with: NSRange(location: o.range.upperBound, length: blocco.upperBound - o.range.upperBound))).uppercased()
+                codice = titolo.hasPrefix("FERIE") ? "FER" : titolo.hasPrefix("FORMAZ") ? "FO" : titolo.hasPrefix("PERMESS") ? "PE" : codice.uppercased()
+            }
 
             let inizio = c.date(byAdding: .minute, value: (n(orario, 1) ?? 0) * 60 + (n(orario, 2) ?? 0), to: data)!
             var fine = c.date(byAdding: .minute, value: (n(orario, 3) ?? 0) * 60 + (n(orario, 4) ?? 0), to: data)!

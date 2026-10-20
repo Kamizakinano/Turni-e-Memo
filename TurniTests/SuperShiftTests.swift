@@ -102,4 +102,23 @@ final class SuperShiftTests: XCTestCase {
         XCTAssertEqual(oreMinuti(t.ore), "8 h 54 min")
         XCTAssertTrue(Turno(id: "f", inizio: .now, fine: .now, codice: "FE").assenza)
     }
+
+    // Il testo vero del PDF di SuperShift (nov 2025 – ott 2026) con le note sostituite da "Nota 1", "Nota 2"…
+    // e senza nomi né luoghi: ogni nota deve diventare un memo, e il turno previsto di Dayforce no.
+    func testPDFVeroAnonimo() throws {
+        let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "supershift-anonimo", withExtension: "txt"))
+        let testo = try String(contentsOf: url, encoding: .utf8)
+        let giorni = SuperShift.leggi(testo)
+        XCTAssertEqual(giorni.count, 365)                                   // tutto l'anno, anche ferie ("g") e formazione ("h")
+        XCTAssertEqual(giorni.filter { $0.codice == "FER" }.count, 30)
+        XCTAssertEqual(giorni.filter { $0.codice == "FO" }.count, 3)
+        let re = try NSRegularExpression(pattern: "Nota \\d+")
+        let ns = testo as NSString
+        let attese = Set(re.matches(in: testo, range: NSRange(location: 0, length: ns.length)).map { ns.substring(with: $0.range) })
+        let lette = Set(giorni.flatMap(\.memo).map(\.testo)).filter { $0.hasPrefix("Nota") }
+        XCTAssertEqual(lette, attese, "Memo mancanti: \(attese.subtracting(lette).sorted())")
+        XCTAssertFalse(giorni.flatMap(\.memo).contains { $0.testo == "Lavoro Previsto" })
+        XCTAssertFalse(giorni.flatMap(\.memo).contains { $0.testo == "Ognissanti" })
+        XCTAssertFalse(giorni.contains { $0.codice.first?.isLowercase == true })
+    }
 }

@@ -798,7 +798,7 @@ struct ImportaSuperShift: View {
             List {
                 Section {
                     let conta = Dictionary(grouping: giorni, by: \.codice).mapValues(\.count)
-                    ForEach(["MA", "PO", "RI", "MI", "FE", "PE"], id: \.self) { k in
+                    ForEach(["MA", "PO", "RI", "MI", "FO", "FER", "FE", "PE"], id: \.self) { k in
                         if let n = conta[k] { Riga(titolo: SuperShift.nome(k), valore: "\(n)") }
                     }
                     Toggle("Importa anche i \(giorni.flatMap(\.memo).count) memo", isOn: $conMemo)

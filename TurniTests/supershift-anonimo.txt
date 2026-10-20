@@ -1,0 +1,778 @@
+            novembre 2025
+                     1       Sab   MA   05 20 - 14 29     11 00, 15 min   8 h 54 min   Mattina
+                                        Tutto il giorno                                Ognissanti
+                                        05 00 - 14 00                                  Lavoro Previsto
+                 2           Dom   MA   06 00 - 14 17     11 00, 13 min   8 h 4 min    Mattina
+                                        06 00 - 14 00                                  Lavoro Previsto
+                 3           Lun   MA   05 30 - 13 42     11 00, 37 min   7 h 35 min   Mattina
+                                        05 30 - 13 30                                  Lavoro Previsto
+                                        12 00 - 13 00                                  Nota 1
+                 4           Mar   RI   00 00 - 00 00                     24 h         Riposo
+                 5           Mer   MA   05 59 - 14 23     11 00, 13 min   8 h 11 min   Mattina
+                                        06 00 - 14 00                                  Lavoro Previsto
+                 6           Gio   MA   09 27 - 14 08                     4 h 41 min   Mattina
+                                        05 30 - 12 00                                  Lavoro Previsto
+                                        12 00 - 13 00                                  Nota 2
+                 7           Ven   MA   06 00 - 13 41     11 00, 19 min   7 h 22 min   Mattina
+                                        06 00 - 14 00                                  Lavoro Previsto
+                                        12 00 - 13 00                                  Nota 3
+                                        12 00 - 13 00                                  Nota 4
+                 8           Sab   PO   13 00 - 21 35     15 00, 22 min   8 h 13 min   Pomeriggio
+                                        12 00 - 13 00                                  Nota 2
+                                        13 30 - 21 30                                  Lavoro Previsto
+                 9           Dom   PO   13 17 - 21 45     15 00, 11 min   8 h 17 min   Pomeriggio
+                                        12 00 - 13 00                                  Nota 5
+                                        13 30 - 21 30                                  Lavoro Previsto
+                                        22 00 - 23 00                                  Nota 6
+             10              Lun   RI   00 00 - 00 00                     24 h         Riposo
+             11              Mar   MA   05 58 - 14 16     11 00, 11 min   8 h 7 min    Mattina
+                                        06 00 - 14 00                                  Lavoro Previsto
+             12              Mer   MA   05 59 - 14 30     11 00, 17 min   8 h 14 min   Mattina
+                                        06 00 - 14 30                                  Lavoro Previsto
+             13              Gio   RI   00 00 - 00 00                     24 h         Riposo
+                                        09 30 - 10 00                                  Nota 7
+                               14              Ven   MA   05 59 - 14 18     11 00, 11 min   8 h 8 min    Mattina
+                                                          06 00 - 14 00                                  Lavoro Previsto
+                               15              Sab   MA   05 30 - 14 13     11 00, 14 min   8 h 29 min   Mattina
+                                                          05 30 - 14 00                                  Lavoro Previsto
+                               16              Dom   PO   13 30 - 21 30     15 00, 11 min   7 h 49 min   Pomeriggio
+                                                          13 30 - 21 30                                  Lavoro Previsto
+                               17              Lun   RI   00 00 - 00 00                     24 h         Riposo
+                               18              Mar   MA   06 00 - 14 22     11 00, 14 min   8 h 8 min    Mattina
+                                                          06 00 - 14 00                                  Lavoro Previsto
+                               19              Mer   PO   12 56 - 21 37     15 00, 18 min   8 h 23 min   Pomeriggio
+                                                          13 00 - 21 30                                  Lavoro Previsto
+                              20               Gio   PO   13 01 - 21 32     15 00, 19 min   8 h 12 min   Pomeriggio
+                                                          13 00 - 21 30                                  Lavoro Previsto
+                               21              Ven   MA   09 30 - 17 00     11 00, 23 min   7 h 7 min    Mattina
+                                                          09 30 - 17 00                                  Lavoro Previsto
+                                                          12 00 - 13 00                                  Nota 8
+                              22               Sab   MA   05 00 - 13 30     11 00, 15 min   8 h 15 min   Mattina
+                                                          05 00 - 13 30                                  Lavoro Previsto
+                              23               Dom   RI   00 00 - 00 00                     24 h         Riposo
+                              24               Lun   g    09 00 - 15 00                     6h           FERIE
+                                                          11 40 - 14 20                                  Nota 9
+                                                          11 40 - 16 20                                  Nota 10
+                                                          12 40 - 15 20                                  Nota 11
+                              25               Mar   g    09 00 - 15 00                     6h           FERIE
+                                                          Tutto il giorno                                Nota 10
+                               26           Mer   g   09 00 - 15 00             6h   FERIE
+                                                      12 15 - 13 35                  Nota 12
+                                                      13 15 - 14 35                  Nota 13
+                                                      14 15 - 15 35                  Nota 14
+                               27           Gio   g   09 00 - 17 00             8h   FERIE
+                                                      Tutto il giorno                Nota 14
+                               28           Ven   g   09 00 - 15 00             6h   FERIE
+                                                      20 00 - 21 30                  Nota 15
+                                                      22 00 - 23 30                  Nota 10
+                               29           Sab   g   09 00 - 17 00             8h   FERIE
+                                                      13 35 - 14 35                  Nota 16
+                          30               Dom   RI   00 00 - 00 00                     24 h         Riposo
+                                                      11 35 - 14 25                                  Nota 12
+                                                      12 35 - 15 25                                  Nota 17
+                          dicembre 2025
+                                   1       Lun   PO   13 28 - 21 51     15 00, 25 min   7 h 58 min   Pomeriggio
+                                                      13 30 - 21 30                                  Lavoro Previsto
+                               2           Mar   RI   00 00 - 00 00                     24 h         Riposo
+                               3           Mer   MA   06 00 - 14 15     11 00, 12 min   8 h 3 min    Mattina
+                                                      06 00 - 14 00                                  Lavoro Previsto
+                               4           Gio   RI   00 00 - 00 00                     24 h         Riposo
+                               5           Ven   MA   06 00 - 14 27     11 00, 13 min   8 h 14 min   Mattina
+                                                      06 00 - 14 00                                  Lavoro Previsto
+                                                      20 00 - 21 00                                  Nota 18
+                               6           Sab   MA   06 00 - 13 50     11 00, 15 min   7 h 35 min   Mattina
+                                                      06 00 - 14 00                                  Lavoro Previsto
+                               7           Dom   PO   13 30 - 21 47     15 00, 15 min   8 h 2 min    Pomeriggio
+                                                      13 30 - 21 30                                  Lavoro Previsto
+                                                      22 00 - 23 00                                  Nota 19
+                               8           Lun   PO   12 41 - 21 45     15 00, 11 min   8 h 53 min   Pomeriggio
+                                                      Tutto il giorno                                Immacolata Concezione
+                                                      13 00 - 21 30                                  Lavoro Previsto
+                    9           Mar   RI   00 00 - 00 00                     24 h         Riposo
+             10                 Mer   MA   09 00 - 18 00     11 00, 25 min   8 h 35 min   Mattina
+                                           06 00 - 14 30                                  Lavoro Previsto
+                11              Gio   MA   05 28 - 13 54     11 00, 11 min   8 h 15 min   Mattina
+                                           05 30 - 13 30                                  Lavoro Previsto
+             12                 Ven   PO   13 30 - 21 30     15 00, 12 min   7 h 48 min   Pomeriggio
+                                           13 30 - 21 30                                  Lavoro Previsto
+             13                 Sab   RI   00 00 - 00 00                     24 h         Riposo
+                                           12 00 - 13 00                                  Nota 20
+             14                 Dom   MA   06 00 - 14 00     11 00, 11 min   7 h 49 min   Mattina
+                                           06 00 - 14 00                                  Lavoro Previsto
+             15                 Lun   PO   13 20 - 18 35                     5 h 15 min   Pomeriggio
+                                           13 30 - 19 00                                  Lavoro Previsto
+             16                 Mar   RI   00 00 - 00 00                     24 h         Riposo
+                17              Mer   MA   06 00 - 14 22     11 00, 22 min   8h           Mattina
+                                           06 00 - 14 00                                  Lavoro Previsto
+             18                 Gio   MA   05 30 - 13 43     11 00, 14 min   7 h 59 min   Mattina
+                                           05 30 - 13 30                                  Lavoro Previsto
+                                           12 00 - 13 00                                  Nota 21
+             19                 Ven   MA   08 59 - 17 14     11 00, 22 min   7 h 53 min   Mattina
+                                           09 00 - 17 00                                  Lavoro Previsto
+             20                 Sab   MA   05 02 - 13 43     11 00, 26 min   8 h 15 min   Mattina
+                                           05 00 - 13 30                                  Lavoro Previsto
+                                           12 00 - 13 00                                  Nota 22
+             21                 Dom   MA   06 00 - 13 51     11 00, 11 min   7 h 40 min   Mattina
+                                           06 00 - 13 30                                  Lavoro Previsto
+             22                 Lun   RI   00 00 - 00 00                     24 h         Riposo
+             23                 Mar   PO   12 56 - 21 56     15 00, 11 min   8 h 49 min   Pomeriggio
+                                           13 00 - 21 30                                  Lavoro Previsto
+             24                 Mer   PO   11 31 - 18 34     15 00, 32 min   6 h 31 min   Pomeriggio
+                                           11 30 - 18 30                                  Lavoro Previsto
+             25                 Gio   FE   00 00 - 08 00                     8h           Festivita
+                                           Tutto il giorno                                Natale di Gesù
+             26          Ven   FE   00 00 - 06 00                     6h           Festivita
+                                    Tutto il giorno                                Santo Stefano
+             27          Sab   PO   15 05 - 21 42     15 00, 11 min   6 h 26 min   Pomeriggio
+                                    15 30 - 21 30                                  Lavoro Previsto
+             28          Dom   PO   13 00 - 21 27     15 00, 11 min   8 h 16 min   Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+             29          Lun   PO   13 30 - 21 31     15 00, 11 min   7 h 50 min   Pomeriggio
+                                    13 30 - 21 30                                  Lavoro Previsto
+             30          Mar   PO   13 30 - 21 43     15 00, 11 min   8 h 2 min    Pomeriggio
+                                    13 30 - 21 30                                  Lavoro Previsto
+             31          Mer   RI   00 00 - 00 00                     24 h         Riposo
+            gennaio 2026
+                 1       Gio   FE   00 00 - 08 00                     8h           Festivita
+                                    Tutto il giorno                                Capodanno
+             2           Ven   PO   13 00 - 21 53     15 00, 11 min   8 h 42 min   Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+             3           Sab   PO   12 59 - 21 30     15 00, 11 min   8 h 20 min   Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+             4           Dom   RI   00 00 - 00 00                     24 h         Riposo
+             5           Lun   MA   05 25 - 14 00     11 00, 11 min   8 h 24 min   Mattina
+                                    05 30 - 13 30                                  Lavoro Previsto
+             6           Mar   MA   07 25 - 15 30     11 00, 11 min   7 h 54 min   Mattina
+                                    Tutto il giorno                                Epifania
+                                    07 30 - 15 30                                  Lavoro Previsto
+             7           Mer   MA   06 00 - 13 45     11 00, 15 min   7 h 30 min   Mattina
+                                    06 00 - 13 30                                  Lavoro Previsto
+             8           Gio   MA   05 30 - 13 38   11 00, 13 min   7 h 55 min   Mattina
+                                    05 30 - 13 30                                Lavoro Previsto
+                                    13 00 - 14 00                                Nota 23
+                                    20 00 - 21 00                                Nota 24
+             9           Ven   PO   14 32 - 19 08                   4 h 36 min   Pomeriggio
+             10          Sab   RI   00 00 - 00 00                   24 h         Riposo
+                                    12 00 - 13 00                                Nota 25
+             11          Dom   MA   06 00 - 14 09   11 00, 11 min   7 h 58 min   Mattina
+                                    06 00 - 14 00                                Lavoro Previsto
+             12          Lun   MA   05 00 - 13 31   11 00, 24 min   8 h 7 min    Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+                                    12 00 - 13 00                                Nota 26
+             13          Mar   MA   05 59 - 14 13   11 00, 19 min   7 h 55 min   Mattina
+                                    06 00 - 14 00                                Lavoro Previsto
+                                    18 00 - 19 00                                Nota 27
+             14          Mer   PO   12 57 - 21 40   15 00, 11 min   8 h 32 min   Pomeriggio
+                                    13 00 - 21 30                                Lavoro Previsto
+             15          Gio   RI   00 00 - 00 00                   24 h         Riposo
+                                    12 00 - 13 00                                Nota 28
+             16          Ven   PO   13 22 - 21 30   15 00, 13 min   7 h 55 min   Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+             17          Sab   PO   13 48 - 21 30   15 00, 11 min   7 h 31 min   Pomeriggio
+                                    14 00 - 21 30                                Lavoro Previsto
+                                    21 30 - 22 30                                Nota 29
+             18          Dom   RI   00 00 - 00 00                   24 h         Riposo
+                                    20 00 - 21 00                                Nota 30
+             19          Lun   PO   13 00 - 21 39   15 00, 13 min   8 h 26 min   Pomeriggio
+                                    13 00 - 21 30                                Lavoro Previsto
+            20           Mar   RI   00 00 - 00 00                   24 h         Riposo
+                                    12 00 - 13 00                                Nota 31
+             21          Mer   MA   06 49 - 15 36   11 00, 12 min   8 h 35 min   Mattina
+                                    07 00 - 15 30                                Lavoro Previsto
+                                    16 00 - 17 00                                Nota 32
+                                    18 00 - 19 00                                Nota 33
+            22               Gio   RI   00 00 - 00 00                   24 h         Riposo
+                                        09 15 - 10 15                                Nota 34
+                                        09 15 - 10 15                                Nota 35
+            23               Ven   MA   05 59 - 14 17   11 00, 13 min   8 h 5 min    Mattina
+                                        06 00 - 14 00                                Lavoro Previsto
+                                        12 00 - 13 00                                Nota 36
+            24               Sab   MA   05 58 - 14 34   11 00, 12 min   8 h 24 min   Mattina
+                                        06 00 - 14 30                                Lavoro Previsto
+                                        18 00 - 19 00                                Nota 24
+            25               Dom   MA   05 59 - 13 30   11 00, 11 min   7 h 20 min   Mattina
+                                        06 00 - 13 30                                Lavoro Previsto
+            26               Lun   MA   06 00 - 14 01   11 00, 11 min   7 h 50 min   Mattina
+                                        05 30 - 13 30                                Lavoro Previsto
+                                        12 00 - 13 00                                Nota 37
+            27               Mar   RI   00 00 - 00 00                   24 h         Riposo
+                                        12 00 - 13 00                                Nota 38
+            28               Mer   MA   06 00 - 13 55   11 00, 36 min   7 h 19 min   Mattina
+                                        13 00 - 21 30                                Lavoro Previsto
+            29               Gio   MA   05 30 - 13 39   11 00, 19 min   7 h 50 min   Mattina
+                                        12 00 - 13 00                                Nota 39
+                                        13 30 - 21 30                                Lavoro Previsto
+                                        20 30 - 21 30                                Nota 40
+            30               Ven   PO   12 59 - 21 51   15 00, 22 min   8 h 30 min   Pomeriggio
+                                        12 00 - 13 00                                Nota 41
+                                        13 00 - 21 30                                Lavoro Previsto
+             31              Sab   RI   00 00 - 00 00                   24 h         Riposo
+                                        08 05 - 09 05                                Nota 42
+            febbraio 2026
+                 1           Dom   MA   06 00 - 14 22   11 00, 17 min   8 h 5 min    Mattina
+                                        06 00 - 14 00                                Lavoro Previsto
+             2               Lun   MA   05 29 - 14 02   11 00, 14 min   8 h 19 min   Mattina
+                                        05 30 - 14 00                                Lavoro Previsto
+                                        19 00 - 20 00                                Nota 37
+             3               Mar   PE   13 30 - 21 30                   8h           Permessi
+                                        12 00 - 13 00                                Nota 43
+                                        12 00 - 13 00                                Nota 44
+             4               Mer   PO   13 00 - 21 45   15 00, 23 min   8 h 22 min   Pomeriggio
+                                        13 00 - 21 30                                Lavoro Previsto
+             5               Gio   PO   13 00 - 21 30   15 00, 11 min   8 h 19 min   Pomeriggio
+                                        13 00 - 21 30                                Lavoro Previsto
+             6               Ven   PO   13 30 - 21 30   15 00, 11 min   7 h 49 min   Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+             7               Sab   RI   00 00 - 00 00                   24 h         Riposo
+             8               Dom   RI   00 00 - 00 00                   24 h         Riposo
+             9               Lun   RI   00 00 - 00 00                   24 h         Riposo
+             10              Mar   MA   06 00 - 13 40   11 00, 11 min   7 h 29 min   Mattina
+                                        06 00 - 13 30                                Lavoro Previsto
+             11              Mer   PO   13 09 - 21 44   15 00, 17 min   8 h 18 min   Pomeriggio
+                                        13 00 - 21 30                                Lavoro Previsto
+             12              Gio   PO   13 28 - 21 36   15 00, 20 min   7 h 48 min   Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+             13              Ven   RI   00 00 - 00 00                   24 h         Riposo
+             14              Sab   MA   05 00 - 13 35   11 00, 12 min   8 h 23 min   Mattina
+                                        05 00 - 13 30                                Lavoro Previsto
+             15              Dom   MA   06 00 - 14 16   11 00, 14 min   8 h 2 min    Mattina
+                                        06 00 - 14 00                                Lavoro Previsto
+             16              Lun   MA   05 30 - 13 44   11 00, 19 min   7 h 55 min   Mattina
+                                        05 30 - 13 30                                Lavoro Previsto
+             17              Mar   MA   05 01 - 13 49   11 00, 29 min   8 h 19 min   Mattina
+                                        05 00 - 14 00                                Lavoro Previsto
+             18              Mer   RI   00 00 - 00 00                   24 h         Riposo
+             19              Gio   PO   13 30 - 21 12   15 00, 11 min   7 h 31 min   Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+            20               Ven   RI   00 00 - 00 00                   24 h         Riposo
+             21              Sab   MA   05 30 - 14 00   11 00, 11 min   8 h 19 min   Mattina
+                                        05 30 - 14 00                                Lavoro Previsto
+                                        22 00 - 23 00                                Nota 45
+            22               Dom   PO   13 30 - 21 30   15 00, 11 min   7 h 49 min   Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+            23               Lun   g    06 00 - 12 00                   6h           FERIE
+            24               Mar   MI   08 59 - 16 09   15 00, 13 min   6 h 57 min   MISSIONE
+                                        09 00 - 16 00                                Lavoro Previsto
+            25               Mer   g    06 00 - 12 00                   6h           FERIE
+                                        12 00 - 13 00                                Nota 46
+                                        18 30 - 20 30                                Nota 47
+            26               Gio   MI   13 19 - 21 39   15 00, 13 min   8 h 7 min    MISSIONE
+                                        13 20 - 21 30                                Lavoro Previsto
+            27               Ven   g    06 00 - 12 00                   6h           FERIE
+            28               Sab   g    07 00 - 15 00                   8h           FERIE
+                                        10 00 - 11 00                                Nota 48
+                                        20 00 - 21 00                                Nota 49
+            marzo 2026
+                     1       Dom   RI   00 00 - 00 00                   24 h         Riposo
+                                        12 00 - 13 00                                Nota 50
+                 2           Lun   MI   05 54 - 14 45   15 00, 15 min   8 h 36 min   MISSIONE
+                                        06 00 - 14 30                                Lavoro Previsto
+                 3           Mar   MI   08 30 - 13 30                   5h           MISSIONE
+                                        08 30 - 13 30                                Lavoro Previsto
+                 4           Mer   MI   13 20 - 21 37   15 00, 14 min   8 h 3 min    MISSIONE
+                                        13 20 - 21 30                                Lavoro Previsto
+             5           Gio   MI   09 00 - 17 23   15 00, 12 min   8 h 11 min   MISSIONE
+                                    09 00 - 17 00                                Lavoro Previsto
+             6           Ven   MI   05 59 - 14 05   15 00, 19 min   7 h 47 min   MISSIONE
+                                    06 00 - 14 00                                Lavoro Previsto
+             7           Sab   RI   00 00 - 00 00                   24 h         Riposo
+             8           Dom   MI   14 00 - 21 10   15 00, 12 min   6 h 58 min   MISSIONE
+                                    13 00 - 21 00                                Lavoro Previsto
+             9           Lun   RI   00 00 - 00 00                   24 h         Riposo
+             10          Mar   MA   09 00 - 17 00   11 00, 11 min   7 h 49 min   Mattina
+                                    09 00 - 17 00                                Lavoro Previsto
+             11          Mer   PO   13 29 - 21 57   15 00, 13 min   8 h 15 min   Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+             12          Gio   MI   13 20 - 21 30   15 00, 11 min   7 h 59 min   MISSIONE
+                                    12 00 - 13 00                                Nota 51
+                                    13 20 - 21 30                                Lavoro Previsto
+             13          Ven   MI   13 30 - 21 30   15 00, 11 min   7 h 49 min   MISSIONE
+                                    12 00 - 13 00                                Nota 51
+                                    13 30 - 21 30                                Lavoro Previsto
+             14          Sab   RI   00 00 - 00 00                   24 h         Riposo
+             15          Dom   MA   06 00 - 14 21   11 00, 11 min   8 h 10 min   Mattina
+                                    06 00 - 14 00                                Lavoro Previsto
+             16          Lun   MA   05 30 - 13 30   11 00, 11 min   7 h 49 min   Mattina
+                                    05 30 - 13 30                                Lavoro Previsto
+             17          Mar   RI   00 00 - 00 00                   24 h         Riposo
+             18          Mer   RI   00 00 - 00 00                   24 h         Riposo
+             19          Gio   MA   05 30 - 13 30   11 00, 11 min   7 h 49 min   Mattina
+                                    05 30 - 13 30                                Lavoro Previsto
+            20           Ven   MA   06 00 - 14 00   11 00, 11 min   7 h 49 min   Mattina
+                                    06 00 - 14 00                                Lavoro Previsto
+             21          Sab   MA   05 00 - 13 30   11 00, 11 min   8 h 19 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+            22           Dom   MA   06 00 - 14 00     11 00, 11 min   7 h 49 min   Mattina
+                                    06 00 - 14 00                                  Lavoro Previsto
+            23           Lun   MA   05 33 - 13 57     11 00, 14 min   8 h 10 min   Mattina
+                                    05 30 - 13 30                                  Lavoro Previsto
+            24           Mar   RI   00 00 - 00 00                     24 h         Riposo
+            25           Mer   PO   13 29 - 21 42     15 00, 17 min   7 h 56 min   Pomeriggio
+                                    13 30 - 21 30                                  Lavoro Previsto
+            26           Gio   RI   00 00 - 00 00                     24 h         Riposo
+            27           Ven   MA   05 29 - 13 49     11 00, 16 min   8 h 4 min    Mattina
+                                    05 30 - 13 30                                  Lavoro Previsto
+            28           Sab   MA   05 00 - 13 49     11 00, 20 min   8 h 29 min   Mattina
+                                    05 00 - 13 30                                  Lavoro Previsto
+            29           Dom   MA   06 00 - 14 25     11 00, 11 min   8 h 14 min   Mattina
+                                    Tutto il giorno                                Ora legale
+                                    06 00 - 14 00                                  Lavoro Previsto
+            30           Lun   MA   05 30 - 14 20     11 00, 11 min   8 h 39 min   Mattina
+                                    05 30 - 13 30                                  Lavoro Previsto
+             31          Mar   PO   13 00 - 21 38     15 00, 11 min   8 h 27 min   Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+            aprile 2026
+                 1       Mer   RI   00 00 - 00 00                     24 h         Riposo
+             2           Gio   PO   13 30 - 21 44     15 00, 15 min   7 h 59 min   Pomeriggio
+                                    13 30 - 21 30                                  Lavoro Previsto
+             3           Ven   PE   06 00 - 12 00                     6h           Permessi
+                                    06 00 - 12 00                                  Nota 52
+             4           Sab   MA   05 00 - 14 26     11 00, 12 min   9 h 14 min   Mattina
+                                    05 00 - 13 00                                  Lavoro Previsto
+             5           Dom   RI   00 00 - 00 00                     24 h         Riposo
+                                    Tutto il giorno                                Pasqua
+             6           Lun   FE   00 00 - 06 00                     6h           Festivita
+                                    Tutto il giorno                                Lunedì di Pasqua
+             7           Mar   PO   13 00 - 21 47     15 00, 13 min   8 h 34 min   Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+             8           Mer   PO   13 00 - 21 46     15 00, 17 min   8 h 29 min   Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+             9           Gio   PO   13 00 - 21 30     15 00, 29 min   8 h 1 min    Pomeriggio
+                                    13 00 - 21 30                                  Lavoro Previsto
+             10          Ven   RI   00 00 - 00 00                     24 h         Riposo
+             11          Sab   MA   05 30 - 14 00     11 00, 11 min   8 h 19 min   Mattina
+                                    05 30 - 14 00                                  Lavoro Previsto
+                                    12 00 - 13 00                                  Nota 53
+             12          Dom   MI   05 55 - 12 14     15 00, 11 min   6 h 8 min    MISSIONE
+                                    06 00 - 12 00                                  Nota 54
+             13          Lun   RI   00 00 - 00 00                     24 h         Riposo
+             14          Mar   MA   05 30 - 14 16     11 00, 17 min   8 h 29 min   Mattina
+                                    05 30 - 14 00                                  Lavoro Previsto
+             15          Mer   MA   05 01 - 13 58     11 00, 22 min   8 h 35 min   Mattina
+                                    05 00 - 14 00                                  Lavoro Previsto
+             16          Gio   g    09 00 - 17 00                     8h           FERIE
+                                    12 00 - 13 00                                  Nota 55
+             17          Ven   g    09 00 - 15 00                     6h           FERIE
+                                    12 00 - 13 00                                  Nota 55
+             18          Sab   g    09 00 - 17 00                     8h           FERIE
+                                    12 00 - 13 00                                  Nota 55
+             19          Dom   RI   00 00 - 00 00                     24 h         Riposo
+                                    12 00 - 13 00                                  Nota 55
+             20          Lun   PO   13 30 - 21 50     15 00, 14 min   8 h 6 min    Pomeriggio
+                                    13 30 - 21 30                                  Lavoro Previsto
+             21          Mar   RI   00 00 - 00 00                     24 h         Riposo
+             22          Mer   MA   05 05 - 14 20     11 00, 27 min   8 h 48 min   Mattina
+                                    05 00 - 13 30                                  Lavoro Previsto
+             23              Gio   RI   00 00 - 00 00                     24 h         Riposo
+             24              Ven   MA   05 29 - 15 12     11 00, 24 min   9 h 19 min   Mattina
+                                        05 30 - 13 30                                  Lavoro Previsto
+             25              Sab   MA   05 00 - 14 59     11 00, 12 min   9 h 47 min   Mattina
+                                        Tutto il giorno                                Liberazione dal nazifascismo
+                                        05 00 - 13 30                                  Lavoro Previsto
+             26              Dom   PO   13 10 - 21 45     15 00, 11 min   8 h 24 min   Pomeriggio
+                                        13 30 - 21 30                                  Lavoro Previsto
+             27              Lun   PO   15 50 - 21 53     15 00, 11 min   5 h 52 min   Pomeriggio
+                                        16 00 - 21 30                                  Lavoro Previsto
+             28              Mar   RI   00 00 - 00 00                     24 h         Riposo
+             29              Mer   PO   12 57 - 21 52     15 00, 17 min   8 h 38 min   Pomeriggio
+                                        13 00 - 21 30                                  Lavoro Previsto
+             30              Gio   PO   13 00 - 21 38     15 00, 11 min   8 h 27 min   Pomeriggio
+                                        12 00 - 13 00                                  Nota 56
+            maggio 2026
+                     1       Ven   MA   09 22 - 16 30     11 00, 23 min   6 h 45 min   Mattina
+                                        Tutto il giorno                                Festa del lavoro
+                                        09 30 - 17 00                                  Lavoro Previsto
+                 2           Sab   MA   05 00 - 13 30     11 00, 17 min   8 h 13 min   Mattina
+                                        05 00 - 13 30                                  Lavoro Previsto
+                 3           Dom   PO   13 00 - 21 52     15 00, 11 min   8 h 41 min   Pomeriggio
+                                        13 00 - 21 30                                  Lavoro Previsto
+                 4           Lun   RI   00 00 - 00 00                     24 h         Riposo
+                                        16 00 - 17 00                                  Nota 32
+                 5           Mar   MA   05 00 - 13 22     11 00, 16 min   8 h 6 min    Mattina
+                                        05 00 - 13 00                                  Lavoro Previsto
+                 6           Mer   MA   05 01 - 13 31     11 00, 12 min   8 h 18 min   Mattina
+                                        05 00 - 13 00                                  Lavoro Previsto
+                    7       Gio   MA   05 30 - 13 19   11 00, 11 min   7 h 38 min   Mattina
+                                       05 30 - 13 00                                Lavoro Previsto
+                8           Ven   RI   00 00 - 00 00                   24 h         Riposo
+                                       12 00 - 13 00                                Nota 57
+                9           Sab   PO   13 30 - 21 30   15 00, 11 min   7 h 49 min   Pomeriggio
+                                       13 30 - 21 30                                Lavoro Previsto
+                                       22 30 - 23 30                                Nota 58
+                10          Dom   PO   13 00 - 21 30   15 00, 11 min   8 h 19 min   Pomeriggio
+                                       13 00 - 21 30                                Lavoro Previsto
+                11          Lun   PO   13 30 - 21 42   15 00, 17 min   7 h 55 min   Pomeriggio
+                                       13 30 - 21 30                                Lavoro Previsto
+                12          Mar   MA   10 32 - 17 51   11 00, 32 min   6 h 47 min   Mattina
+                                       10 30 - 17 30                                Lavoro Previsto
+                                       20 30 - 21 30                                Nota 59
+                13          Mer   MA   05 20 - 14 08   11 00, 24 min   8 h 24 min   Mattina
+                                       05 30 - 13 30                                Lavoro Previsto
+                14          Gio   PO   13 49 - 21 37   15 00, 23 min   7 h 25 min   Pomeriggio
+                                       13 50 - 21 30                                Lavoro Previsto
+                15          Ven   RI   00 00 - 00 00                   24 h         Riposo
+                16          Sab   MA   05 00 - 13 42   11 00, 17 min   8 h 25 min   Mattina
+                                       05 00 - 13 00                                Lavoro Previsto
+                17          Dom   PO   14 00 - 21 30   15 00, 11 min   7 h 19 min   Pomeriggio
+                                       14 00 - 21 30                                Lavoro Previsto
+                18          Lun   PO   14 00 - 22 30   15 00, 29 min   8 h 1 min    Pomeriggio
+                                       14 00 - 23 00                                Lavoro Previsto
+                19          Mar   MA   09 40 - 17 47   11 00, 17 min   7 h 50 min   Mattina
+                                       10 30 - 17 30                                Lavoro Previsto
+                20          Mer   MA   05 01 - 14 24   11 00, 22 min   9 h 1 min    Mattina
+                                       05 00 - 13 20                                Lavoro Previsto
+             21              Gio   MA   05 03 - 13 40     11 00, 14 min   8 h 23 min   Mattina
+                                        05 00 - 13 00                                  Lavoro Previsto
+                                        15 00 - 16 00                                  Nota 60
+             22              Ven   RI   00 00 - 00 00                     24 h         Riposo
+                                        11 30 - 12 30                                  Nota 61
+                                        21 00 - 22 00                                  Nota 62
+             23              Sab   RI   00 00 - 00 00                     24 h         Riposo
+                                        12 00 - 13 00                                  Nota 63
+             24              Dom   MA   06 01 - 15 24     11 00, 17 min   9 h 6 min    Mattina
+                                        06 00 - 14 00                                  Lavoro Previsto
+             25              Lun   MA   05 00 - 14 24     11 00, 14 min   9 h 10 min   Mattina
+                                        05 00 - 14 00                                  Lavoro Previsto
+                                        16 00 - 17 00                                  Nota 64
+             26              Mar   RI   00 00 - 00 00                     24 h         Riposo
+             27              Mer   MA   05 00 - 13 56     11 00, 17 min   8 h 39 min   Mattina
+                                        05 00 - 13 30                                  Lavoro Previsto
+             28              Gio   MA   05 00 - 12 50     11 00, 12 min   7 h 38 min   Mattina
+                                        05 00 - 12 30                                  Lavoro Previsto
+             29              Ven   PO   12 59 - 21 49     15 00, 13 min   8 h 37 min   Pomeriggio
+                                        13 00 - 21 30                                  Lavoro Previsto
+             30              Sab   PO   13 01 - 21 30     15 00, 22 min   8 h 7 min    Pomeriggio
+                                        13 00 - 21 30                                  Lavoro Previsto
+             31              Dom   RI   00 00 - 00 00                     24 h         Riposo
+                                        12 00 - 13 00                                  Nota 65
+            giugno 2026
+                     1       Lun   g    09 00 - 15 00                     6h           FERIE
+                 2           Mar   FE   00 00 - 06 00                     6h           Festivita
+                                        Tutto il giorno                                Festa della Repubblica
+                 3           Mer   g    09 00 - 15 00                     6h           FERIE
+                 4           Gio   g    09 00 - 17 00                     8h           FERIE
+             5               Ven   g    09 00 - 15 00                     6h           FERIE
+             6               Sab   g    09 00 - 17 00                     8h           FERIE
+             7               Dom   RI   00 00 - 00 00                     24 h         Riposo
+             8               Lun   g    09 00 - 15 00                     6h           FERIE
+             9               Mar   g    09 00 - 15 00                     6h           FERIE
+             10              Mer   g    09 00 - 15 00                     6h           FERIE
+             11              Gio   g    09 00 - 17 00                     8h           FERIE
+             12              Ven   g    09 00 - 15 00                     6h           FERIE
+             13              Sab   g    09 00 - 17 00                     8h           FERIE
+             14              Dom   RI   00 00 - 00 00                     24 h         Riposo
+             15              Lun   PO   15 28 - 21 53     15 00, 14 min   6 h 11 min   Pomeriggio
+                                        15 30 - 21 30                                  Lavoro Previsto
+             16              Mar   PO   12 59 - 21 30     15 00, 22 min   8 h 9 min    Pomeriggio
+                                        13 00 - 21 30                                  Lavoro Previsto
+             17              Mer   RI   00 00 - 00 00                     24 h         Riposo
+             18              Gio   MA   05 02 - 14 12     11 00, 29 min   8 h 41 min   Mattina
+                                        05 00 - 14 00                                  Lavoro Previsto
+                                        19 00 - 21 30                                  Nota 66
+             19              Ven   MA   05 00 - 13 31     11 00, 26 min   8 h 5 min    Mattina
+                                        05 00 - 14 00                                  Lavoro Previsto
+                                        19 00 - 20 00                                  Nota 67
+            20               Sab   MA   05 26 - 12 59     11 00, 11 min   7 h 22 min   Mattina
+                                        05 00 - 13 00                                  Lavoro Previsto
+                                        19 00 - 20 00                                  Nota 67
+             21              Dom   MA   06 00 - 13 49     11 00, 14 min   7 h 35 min   Mattina
+                                        06 00 - 13 30                                  Lavoro Previsto
+            22               Lun   RI   00 00 - 00 00                     24 h         Riposo
+                                        12 00 - 13 00                                  Nota 68
+            23               Mar   MA   05 55 - 15 12     11 00, 14 min   9 h 3 min    Mattina
+                                        Tutto il giorno                                Nota 69
+                                        05 30 - 13 00                                  Lavoro Previsto
+            24               Mer   MA   10 34 - 19 53     11 00, 19 min   9h           Mattina
+                                        13 30 - 21 30                                  Lavoro Previsto
+            25           Gio   PO   12 30 - 21 42   15 00, 17 min   8 h 55 min   Pomeriggio
+                                    12 45 - 21 30                                Lavoro Previsto
+            26           Ven   RI   00 00 - 00 00                   24 h         Riposo
+            27           Sab   MA   06 00 - 15 32   11 00, 12 min   9 h 20 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+                        28              Dom   MA   05 29 - 13 30   11 00, 11 min   7 h 50 min   Mattina
+                                                   05 30 - 13 00                                Lavoro Previsto
+                                                   17 30 - 21 00                                Nota 70
+            29           Lun   MA   05 30 - 14 29   11 00, 11 min   8 h 48 min   Mattina
+                                    05 30 - 13 30                                Lavoro Previsto
+                                    12 00 - 13 00                                Nota 71
+            30           Mar   MI   06 00 - 08 00                   2h           MISSIONE
+                                    09 00 - 15 30                                Lavoro Previsto
+            luglio 2026
+                 1       Mer   MA   05 01 - 14 45   11 00, 11 min   9 h 33 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+             2           Gio   RI   00 00 - 00 00                   24 h         Riposo
+             3           Ven   h    09 00 - 13 00                   4h           FORMAZIONE
+                                    09 00 - 13 00                                Nota 72
+             4           Sab   RI   00 00 - 00 00                   24 h         Riposo
+             5           Dom   PO   13 29 - 21 48   15 00, 12 min   8 h 7 min    Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+             6           Lun   PO   13 30 - 21 50   15 00, 13 min   8 h 7 min    Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+             7           Mar   h    14 00 - 18 00                   4h           FORMAZIONE
+                                    14 00 - 18 00                                Nota 73
+             8           Mer   PO   13 00 - 21 52   15 00, 15 min   8 h 37 min   Pomeriggio
+                                    13 00 - 21 30                                Lavoro Previsto
+             9           Gio   PO   13 30 - 21 49   15 00, 17 min   8 h 2 min    Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+             10          Ven   RI   00 00 - 00 00                   24 h         Riposo
+             11          Sab   MA   05 00 - 13 24   11 00, 11 min   8 h 13 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+             12          Dom   MA   06 00 - 13 30   11 00, 11 min   7 h 19 min   Mattina
+                                    13 30 - 21 30                                Lavoro Previsto
+             13              Lun   MA   09 31 - 15 42   11 00, 14 min   5 h 57 min   Mattina
+                                        09 30 - 15 30                                Lavoro Previsto
+             14              Mar   PO   13 29 - 21 40   15 00, 17 min   7 h 54 min   Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+             15              Mer   RI   00 00 - 00 00                   24 h         Riposo
+                                        06 00 - 07 00                                Nota 74
+             16              Gio   MA   05 00 - 14 05   11 00, 21 min   8 h 44 min   Mattina
+                                        05 00 - 13 30                                Lavoro Previsto
+             17              Ven   PO   13 31 - 21 49   15 00, 20 min   7 h 58 min   Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+             18              Sab   PO   13 30 - 21 50   15 00, 20 min   8h           Pomeriggio
+                                        13 30 - 21 30                                Lavoro Previsto
+             19              Dom   PO   13 00 - 21 30   15 00, 11 min   8 h 19 min   Pomeriggio
+                                        13 00 - 21 30                                Lavoro Previsto
+            20               Lun   RI   00 00 - 00 00                   24 h         Riposo
+             21              Mar   MA   06 00 - 14 38   11 00, 11 min   8 h 27 min   Mattina
+                                        05 00 - 14 00                                Lavoro Previsto
+                                        12 00 - 13 00                                Nota 75
+            22               Mer   MA   05 00 - 13 38   11 00, 11 min   8 h 27 min   Mattina
+                                        05 00 - 14 00                                Lavoro Previsto
+            23               Gio   MA   04 58 - 14 16   11 00, 12 min   9 h 6 min    Mattina
+                                        05 00 - 14 00                                Lavoro Previsto
+                                        20 50 - 21 50                                Nota 76
+            24               Ven   MA   04 59 - 14 17   11 00, 11 min   9 h 7 min    Mattina
+                                        05 00 - 14 00                                Lavoro Previsto
+            25               Sab   PE   10 00 - 14 30                   4 h 30 min   Permessi
+            26               Dom   RI   00 00 - 00 00                   24 h         Riposo
+            27               Lun   MA   05 56 - 14 26   11 00, 13 min   8 h 17 min   Mattina
+                                        06 00 - 13 00                                Lavoro Previsto
+            28           Mar   MA   06 00 - 14 19   11 00, 12 min   8 h 7 min     Mattina
+                                    06 00 - 13 30                                 Lavoro Previsto
+            29           Mer   MA   05 00 - 15 06   11 00, 13 min   9 h 53 min    Mattina
+                                    05 00 - 14 00                                 Lavoro Previsto
+                                    12 00 - 13 00                                 Nota 77
+            30           Gio   MA   05 30 - 14 40   11 00, 14 min   8 h 56 min    Mattina
+                                    05 30 - 13 30                                 Lavoro Previsto
+             31          Ven   MA   06 00 - 14 00   11 00, 22 min   7 h 38 min    Mattina
+                                    06 00 - 14 00                                 Lavoro Previsto
+            agosto 2026
+                 1       Sab   RI   00 00 - 00 00                   24 h          Riposo
+             2           Dom   RI   00 00 - 00 00                   24 h          Riposo
+             3           Lun   MA   05 01 - 15 48   11 00, 24 min   10 h 23 min   Mattina
+                                    05 00 - 13 00                                 Lavoro Previsto
+             4           Mar   MA   06 56 - 17 09   11 00, 19 min   9 h 54 min    Mattina
+                                    07 00 - 16 00                                 Lavoro Previsto
+             5           Mer   MA   05 00 - 14 57   11 00, 14 min   9 h 43 min    Mattina
+                                    05 00 - 13 30                                 Lavoro Previsto
+             6           Gio   RI   00 00 - 00 00                   24 h          Riposo
+             7           Ven   MA   05 00 - 13 30   11 00, 11 min   8 h 19 min    Mattina
+                                    05 00 - 13 30                                 Lavoro Previsto
+             8           Sab   RI   00 00 - 00 00                   24 h          Riposo
+             9           Dom   MA   06 00 - 13 00   11 00, 11 min   6 h 49 min    Mattina
+                                    06 00 - 13 00                                 Lavoro Previsto
+             10          Lun   PO   13 56 - 21 34   15 00, 21 min   7 h 17 min    Pomeriggio
+                                    14 00 - 21 30                                 Lavoro Previsto
+             11          Mar   PO   13 30 - 21 47   15 00, 13 min   8 h 4 min     Pomeriggio
+                                    13 30 - 21 30                                 Lavoro Previsto
+             12          Mer   RI   00 00 - 00 00                     24 h         Riposo
+             13          Gio   MA   05 06 - 14 22     11 00, 13 min   9 h 3 min    Mattina
+                                    05 00 - 14 00                                  Lavoro Previsto
+             14          Ven   MA   05 00 - 14 00     11 00, 13 min   8 h 47 min   Mattina
+                                    05 00 - 13 30                                  Lavoro Previsto
+             15          Sab   MA   06 00 - 15 09     11 00, 21 min   8 h 48 min   Mattina
+                                    Tutto il giorno                                Assunzione di Maria
+                                    06 00 - 13 30                                  Lavoro Previsto
+             16          Dom   RI   00 00 - 00 00                     24 h         Riposo
+             17          Lun   MA   05 00 - 13 13     11 00, 18 min   7 h 55 min   Mattina
+                                    05 00 - 13 00                                  Lavoro Previsto
+             18          Mar   MA   05 25 - 14 34     11 00, 19 min   8 h 50 min   Mattina
+                                    05 30 - 14 00                                  Lavoro Previsto
+             19          Mer   MA   04 59 - 14 23     11 00, 14 min   9 h 10 min   Mattina
+                                    05 00 - 13 00                                  Lavoro Previsto
+             20          Gio   MA   05 00 - 13 30     11 00, 11 min   8 h 19 min   Mattina
+                                    05 00 - 13 30                                  Lavoro Previsto
+             21          Ven   RI   00 00 - 00 00                     24 h         Riposo
+             22          Sab   PO   14 00 - 21 30     15 00, 11 min   7 h 19 min   Pomeriggio
+                                    14 00 - 21 30                                  Lavoro Previsto
+             23          Dom   RI   00 00 - 00 00                     24 h         Riposo
+             24          Lun   g    09 00 - 15 00                     6h           FERIE
+             25          Mar   g    09 00 - 15 00                     6h           FERIE
+             26          Mer   g    09 00 - 15 00                     6h           FERIE
+             27          Gio   g    09 00 - 17 00                     8h           FERIE
+             28          Ven   g    09 00 - 15 00                     6h           FERIE
+             29          Sab   g    09 00 - 17 00                     8h           FERIE
+             30          Dom   RI   00 00 - 00 00                     24 h         Riposo
+             31          Lun   RI   00 00 - 00 00                     24 h         Riposo
+            settembre 2026
+                 1       Mar   MA   06 00 - 14 39   11 00, 25 min   8 h 14 min   Mattina
+                                    06 00 - 14 00                                Lavoro Previsto
+                                    06 00 - 14 00                                Lavoro Previsto
+             2           Mer   MA   05 00 - 13 48   11 00, 26 min   8 h 22 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+                                    05 00 - 13 30                                Lavoro Previsto
+             3           Gio   PO   13 00 - 21 30   15 00, 11 min   8 h 19 min   Pomeriggio
+                                    13 00 - 21 30                                Lavoro Previsto
+                                    13 00 - 21 30                                Lavoro Previsto
+             4           Ven   RI   00 00 - 00 00                   24 h         Riposo
+             5           Sab   MA   05 30 - 14 00   11 00, 11 min   8 h 19 min   Mattina
+                                    05 30 - 14 00                                Lavoro Previsto
+                                    05 30 - 14 00                                Lavoro Previsto
+             6           Dom   PO   13 30 - 21 30   15 00, 11 min   7 h 49 min   Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+                                    13 30 - 21 30                                Lavoro Previsto
+             7           Lun   RI   00 00 - 00 00                   24 h         Riposo
+                                    12 00 - 13 00                                Nota 78
+             8           Mar   MA   05 30 - 13 30   11 00, 11 min   7 h 49 min   Mattina
+                                    05 30 - 13 30                                Lavoro Previsto
+                                    05 30 - 13 30                                Lavoro Previsto
+             9           Mer   MA   05 00 - 13 30   11 00, 11 min   8 h 19 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+                                    05 00 - 13 30                                Lavoro Previsto
+                                    12 00 - 13 00                                Nota 79
+             10          Gio   MA   05 00 - 13 00   11 00, 11 min   7 h 49 min   Mattina
+                                    05 00 - 13 00                                Lavoro Previsto
+                                    05 00 - 13 00                                Lavoro Previsto
+             11          Ven   PO   15 00 - 21 30   15 00, 11 min   6 h 19 min   Pomeriggio
+                                    13 00 - 21 30                                Lavoro Previsto
+                                    13 00 - 21 30                                Lavoro Previsto
+             12          Sab   RI   00 00 - 00 00                   24 h         Riposo
+             13          Dom   PO   13 30 - 21 30   15 00, 11 min   7 h 49 min   Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+                                    13 30 - 21 30                                Lavoro Previsto
+             14          Lun   RI   00 00 - 00 00                   24 h         Riposo
+                                    12 00 - 13 00                                Nota 80
+             15          Mar   RI   00 00 - 00 00                   24 h         Riposo
+             16          Mer   RI   00 00 - 00 00                   24 h         Riposo
+                                    12 00 - 13 00                                Nota 81
+             17          Gio   MA   05 01 - 13 56   11 00, 14 min   8 h 41 min   Mattina
+                                    05 00 - 13 30                                Lavoro Previsto
+                                    05 00 - 13 30                                Lavoro Previsto
+             18          Ven   PO   13 00 - 21 37   15 00, 30 min   8 h 7 min    Pomeriggio
+                                    13 00 - 21 30                                Lavoro Previsto
+                                    13 00 - 21 30                                Lavoro Previsto
+             19          Sab   PO   13 30 - 21 34   15 00, 41 min   7 h 23 min   Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+                                    13 30 - 21 30                                Lavoro Previsto
+            20           Dom   PO   13 30 - 21 46   15 00, 11 min   8 h 5 min    Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+                                    13 30 - 21 30                                Lavoro Previsto
+             21          Lun   PO   12 56 - 21 46   15 00, 18 min   8 h 32 min   Pomeriggio
+                                    12 00 - 13 00                                Nota 82
+                                    13 00 - 21 30                                Lavoro Previsto
+                                    13 00 - 21 30                                Lavoro Previsto
+            22           Mar   PO   13 30 - 21 54   15 00, 11 min   8 h 13 min   Pomeriggio
+                                    13 30 - 21 30                                Lavoro Previsto
+                                    13 30 - 21 30                                Lavoro Previsto
+            23           Mer   RI   00 00 - 00 00                     24 h         Riposo
+            24           Gio   MA   05 00 - 13 09     11 00, 34 min   7 h 35 min   Mattina
+                                    05 00 - 13 00                                  Lavoro Previsto
+                                    05 00 - 13 00                                  Lavoro Previsto
+            25           Ven   MA   05 00 - 13 16     11 00, 31 min   7 h 45 min   Mattina
+                                    05 00 - 13 00                                  Lavoro Previsto
+                                    05 00 - 13 00                                  Lavoro Previsto
+                                    18 00 - 21 00                                  Nota 83
+            26           Sab   MA   05 47 - 14 15     11 00, 12 min   8 h 16 min   Mattina
+                                    06 00 - 14 00                                  Lavoro Previsto
+                                    06 00 - 14 00                                  Lavoro Previsto
+            27           Dom   RI   00 00 - 00 00                     24 h         Riposo
+            28           Lun   MA   05 30 - 14 01     11 00, 12 min   8 h 19 min   Mattina
+                                    05 30 - 13 30                                  Lavoro Previsto
+                                    05 30 - 13 30                                  Lavoro Previsto
+            29           Mar   MA   05 30 - 14 27     11 00, 21 min   8 h 36 min   Mattina
+                                    05 30 - 13 45                                  Lavoro Previsto
+                                    05 30 - 13 45                                  Lavoro Previsto
+            30           Mer   MA   06 57 - 12 06     11 00, 22 min   4 h 47 min   Mattina
+                                    07 00 - 12 00                                  Lavoro Previsto
+                                    07 00 - 12 00                                  Lavoro Previsto
+                                    12 00 - 13 00                                  Nota 84
+            ottobre 2026
+                 1       Gio   RI   00 00 - 00 00                     24 h         Riposo
+                                    Tutto il giorno                                Nota 85
+             2           Ven   RI   00 00 - 00 00                     24 h         Riposo
+                                    Tutto il giorno                                Nota 85
+                 3           Sab   MA   05 00 - 14 12   11 00, 43 min   8 h 29 min    Mattina
+                                        05 00 - 13 30                                 Lavoro Previsto
+                                        05 00 - 13 30                                 Lavoro Previsto
+                 4           Dom   MI   05 56 - 14 04   15 00, 20 min   7 h 48 min    MISSIONE
+                                        06 00 - 14 00                                 Nota 86
+                                        06 00 - 14 00                                 Lavoro Previsto
+                                        06 00 - 14 00                                 Lavoro Previsto
+                 5           Lun   MA   04 59 - 13 12   11 00, 20 min   7 h 53 min    Mattina
+                                        05 00 - 13 00                                 Lavoro Previsto
+                                        05 00 - 13 00                                 Lavoro Previsto
+                 6           Mar   PO   14 00 - 21 39   15 00, 13 min   7 h 26 min    Pomeriggio
+                                        14 00 - 21 30                                 Lavoro Previsto
+                                        14 00 - 21 30                                 Lavoro Previsto
+                 7           Mer   PO   14 01 - 21 55   15 00, 11 min   7 h 43 min    Pomeriggio
+                                        14 00 - 21 30                                 Lavoro Previsto
+                                        14 00 - 21 30                                 Lavoro Previsto
+                 8           Gio   h    13 30 - 17 30                   4h            FORMAZIONE
+                 9           Ven   RI   00 00 - 00 00                   24 h          Riposo
+             10              Sab   MA   05 02 - 13 54   11 00, 11 min   8 h 41 min    Mattina
+                                        05 00 - 13 00                                 Lavoro Previsto
+                                        05 00 - 13 00                                 Lavoro Previsto
+                                        12 00 - 13 00                                 Nota 87
+                                        12 00 - 13 00                                 Nota 88
+             11              Dom   MA   06 00 - 14 41   11 00, 14 min   8 h 27 min    Mattina
+                                        06 00 - 13 30                                 Lavoro Previsto
+                                        06 00 - 13 30                                 Lavoro Previsto
+             12              Lun   MA   05 00 - 15 45   11 00, 29 min   10 h 16 min   Mattina
+                                        05 00 - 13 00                                 Lavoro Previsto
+                                        05 00 - 13 00                                 Lavoro Previsto
+         13          Mar   MA   05 01 - 13 44   11 00, 20 min   8 h 23 min   Mattina
+                                05 00 - 13 30                                Lavoro Previsto
+                                05 00 - 13 30                                Lavoro Previsto
+         14          Mer   MA   07 49 - 15 50   11 00, 39 min   7 h 22 min   Mattina
+                                07 50 - 15 50                                Lavoro Previsto
+                                07 50 - 15 50                                Lavoro Previsto
+         15          Gio   MA   05 02 - 14 23   11 00, 38 min   8 h 43 min   Mattina
+                                05 00 - 13 30                                Lavoro Previsto
+                                05 00 - 13 30                                Lavoro Previsto
+                                12 00 - 13 00                                Nota 89
+         16          Ven   RI   00 00 - 00 00                   24 h         Riposo
+                                12 00 - 13 00                                Nota 90
+         17          Sab   RI   00 00 - 00 00                   24 h         Riposo
+                                12 00 - 13 00                                Nota 90
+         18          Dom   MA   09 30 - 17 00   11 00, 11 min   7 h 19 min   Mattina
+                                09 30 - 17 00                                Lavoro Previsto
+                                09 30 - 17 00                                Lavoro Previsto
+         19          Lun   MA   05 00 - 13 30   11 00, 11 min   8 h 19 min   Mattina
+                                05 00 - 13 30                                Lavoro Previsto
+                                05 00 - 13 30                                Lavoro Previsto
+        20           Mar   MA   06 00 - 13 30   11 00, 11 min   7 h 19 min   Mattina
+                                06 00 - 13 30                                Lavoro Previsto
+                                06 00 - 13 30                                Lavoro Previsto
+         21          Mer   MA   05 00 - 13 30   11 00, 11 min   8 h 19 min   Mattina
+                                05 00 - 13 30                                Lavoro Previsto
+                                05 00 - 13 30                                Lavoro Previsto
+        22           Gio   MA   05 00 - 13 30   11 00, 11 min   8 h 19 min   Mattina
+                                05 00 - 13 30                                Lavoro Previsto
+                                05 00 - 13 30                                Lavoro Previsto
+                                08 00 - 18 00                                Nota 91
+             23          Ven   PO   13 30 - 21 30     15 00, 11 min   7 h 49 min   Pomeriggio
+                                    13 30 - 21 30                                  Lavoro Previsto
+                                    13 30 - 21 30                                  Lavoro Previsto
+             24          Sab   RI   00 00 - 00 00                     24 h         Riposo
+                                    16 30 - 19 00                                  Nota 92
+             25          Dom   RI   00 00 - 00 00                     25 h         Riposo
+                                    Tutto il giorno                                Ora solare
+             26          Lun   MA   05 00 - 12 30     11 00, 11 min   7 h 19 min   Mattina
+                                    05 00 - 12 30                                  Lavoro Previsto
+                                    05 00 - 12 30                                  Lavoro Previsto
+                                    12 00 - 13 00                                  Nota 93
+             27          Mar   MA   05 00 - 13 30     11 00, 11 min   8 h 19 min   Mattina
+                                    05 00 - 13 30                                  Lavoro Previsto
+                                    05 00 - 13 30                                  Lavoro Previsto
+                                    12 00 - 13 00                                  Nota 94
+             28          Mer   MA   05 00 - 13 30     11 00, 11 min   8 h 19 min   Mattina
+                                    05 00 - 13 30                                  Lavoro Previsto
+                                    05 00 - 13 30                                  Lavoro Previsto
+                                    17 00 - 19 30                                  Nota 95
+             29          Gio   RI   00 00 - 00 00                     24 h         Riposo
+                                    10 00 - 12 00                                  Nota 96
+             30          Ven   RI   00 00 - 00 00                     24 h         Riposo
+             31          Sab   MA   05 00 - 14 00     11 00, 11 min   8 h 49 min   Mattina
+                                    05 00 - 14 00                                  Lavoro Previsto
+                                    05 00 - 14 00                                  Lavoro Previsto
