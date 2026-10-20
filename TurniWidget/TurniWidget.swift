@@ -153,7 +153,7 @@ struct Schermata: View {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("TURNO DI \(tipo.nome.uppercased())").font(.caption.bold()).foregroundStyle(.gray)
-                        Text(finito ? "Turno finito" : (stato.inizio > .now ? "Inizia alle \(Turno.ora(stato.inizio))" : "Mancano"))
+                        Text(finito ? "Turno finito" : "Mancano alla fine")
                             .font(.title3.bold())
                     }
                     Spacer()

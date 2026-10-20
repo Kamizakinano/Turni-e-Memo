@@ -87,24 +87,29 @@ enum ContoAllaRovescia {
         return nil
     }
 
-    static func aggiorna(_ turni: [Turno], memo: String?, ora: Date = .now) {
+    /// L'ultimo aggiornamento: quelli nuovi aspettano che finisca, così non nascono due riquadri uguali.
+    @MainActor private static var ultimo: Task<Void, Never>?
+
+    @MainActor static func aggiorna(_ turni: [Turno], memo: String?, ora: Date = .now) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let t = daMostrare(turni, ora: ora)
-        Task {
+        let prima = ultimo
+        ultimo = Task { @MainActor in
+            await prima?.value
+            var tenuta = false
             for a in Activity<TurnoAttributes>.activities {
                 let s = a.content.state
-                if t == nil || s.inizio != t!.inizio || s.fine != t!.fine {
+                // Ne resta al massimo una, quella del turno giusto; le altre (anche i doppioni) si chiudono.
+                if let t, !tenuta, s.inizio == t.inizio, s.fine == t.fine {
+                    tenuta = true
+                    await a.update(ActivityContent(state: .init(inizio: t.inizio, fine: t.fine, memo: memo), staleDate: t.fine))
+                } else {
                     await a.end(nil, dismissalPolicy: .immediate)
                 }
             }
-            guard let t else { return }
-            let stato = TurnoAttributes.ContentState(inizio: t.inizio, fine: t.fine, memo: memo)
-            let contenuto = ActivityContent(state: stato, staleDate: t.fine)
-            if let a = Activity<TurnoAttributes>.activities.first(where: { $0.content.state.inizio == t.inizio && $0.content.state.fine == t.fine }) {
-                await a.update(contenuto)
-            } else {
-                _ = try? Activity.request(attributes: TurnoAttributes(tipo: t.tipo.rawValue), content: contenuto, pushType: nil)
-            }
+            guard let t, !tenuta else { return }
+            let contenuto = ActivityContent(state: TurnoAttributes.ContentState(inizio: t.inizio, fine: t.fine, memo: memo), staleDate: t.fine)
+            _ = try? Activity.request(attributes: TurnoAttributes(tipo: t.tipo.rawValue), content: contenuto, pushType: nil)
         }
     }
 }
