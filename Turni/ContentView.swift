@@ -276,7 +276,11 @@ struct OggiView: View {
             Text("pausa \(t.pausa) min · **\(oreMinuti(t.ore))** (\(centesimi(t.ore)))").foregroundStyle(.secondary)
             Text("Hai fatto queste ore?")
             HStack(spacing: 8) {
-                Button { Conferme.conferma(t.inizio); aggiorna.toggle() } label: {
+                Button {
+                    Conferme.conferma(t.inizio)
+                    Storico.aggiungi("Conferma", formatoGiorno(t.inizio, "EEE d MMM").capitalized + " confermato", "\(t.orario) · \(oreMinuti(t.ore))")
+                    aggiorna.toggle()
+                } label: {
                     Text("✅ Sì, giusto").bold().foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 44)
                         .background(AppColor.fng, in: RoundedRectangle(cornerRadius: 12))
                 }
@@ -439,6 +443,8 @@ struct CalendarioView: View {
                     Text("\(Turno.ora(t.inizio))\n\(Turno.ora(t.fine))")
                         .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
                         .lineLimit(2).minimumScaleFactor(0.7)
+                } else if manuali.contains(where: { $0.codice == "FER" && Calendar.current.isDate($0.giorno, inSameDayAs: g) }) {
+                    Text("🏖️\nferie").font(.system(size: 9, weight: .bold))
                 } else {
                     Text("—\n ").font(.system(size: 9, weight: .bold))
                 }
@@ -523,6 +529,7 @@ struct SceltaTurno: View {
     var dayforce: Turno?
 
     @State private var riposo = false
+    @State private var ferie = false
     @State private var inizio = Date.now
     @State private var fine = Date.now
     @State private var pausa = Turno.pausaMinima
@@ -538,7 +545,8 @@ struct SceltaTurno: View {
                 HStack(spacing: 8) {
                     bottone("☀️ Mattina", AppColor.mattina, .white, scelto: !riposo && anteprima.tipo == .mattina) { imposta(mI, mF) }
                     bottone("🌙 Pomeriggio", AppColor.pomeriggio, .white, scelto: !riposo && anteprima.tipo == .pomeriggio) { imposta(pI, pF) }
-                    bottone("😴 Riposo", AppColor.riposo, .primary, scelto: riposo) { riposo = true }
+                    bottone("😴 Riposo", AppColor.riposo, .primary, scelto: riposo && !ferie) { riposo = true; ferie = false }
+                    bottone("🏖️ Ferie", AppColor.fng, .white, scelto: ferie) { riposo = true; ferie = true }
                 }
                 if !riposo {
                     Riquadro {
@@ -565,7 +573,11 @@ struct SceltaTurno: View {
                         .background(AppColor.ardesia, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
-                Button("Torna all'orario di Dayforce") { togli(); chiudi() }
+                Button("Torna all'orario di Dayforce") {
+                    togli()
+                    Storico.aggiungi("A mano", formatoGiorno(giorno, "EEE d MMM").capitalized + ": tornato a Dayforce", Storico.descrivi(dayforce))
+                    chiudi()
+                }
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .background(.white, in: RoundedRectangle(cornerRadius: 14))
             }
@@ -587,10 +599,11 @@ struct SceltaTurno: View {
         pronto = true
         if let m = manuali.first(where: { Calendar.current.isDate($0.giorno, inSameDayAs: giorno) }) {
             riposo = m.riposo
+            ferie = m.codice == "FER"
             inizio = m.inizio
             fine = m.fine
             pausa = max(Turno.pausaMinima, m.pausa)
-            if m.riposo { imposta(mI, mF); riposo = true }
+            if m.riposo { let f = ferie; imposta(mI, mF); riposo = true; ferie = f }
         } else if let d = dayforce {
             inizio = d.inizio
             fine = d.fine
@@ -601,6 +614,7 @@ struct SceltaTurno: View {
 
     func imposta(_ da: Int, _ a: Int) {
         riposo = false
+        ferie = false
         inizio = data(giorno, minuti: da)
         fine = data(giorno, minuti: a > da ? a : a + 1440)
     }
@@ -620,11 +634,17 @@ struct SceltaTurno: View {
     }
 
     func salva() {
+        let vecchio = manuali.first { Calendar.current.isDate($0.giorno, inSameDayAs: giorno) }
+        let prima = vecchio.map { $0.riposo ? nil : $0.turno } ?? dayforce
         togli()
         let m = TurnoManuale(giorno: giorno, riposo: riposo, inizio: inizio, fine: fineVera)
         m.pausa = pausa
+        if ferie { m.codice = "FER" }
         contesto.insert(m)
         Conferme.conferma(giorno)
+        let dopo = ferie ? "🏖️ Ferie" : riposo ? "😴 Riposo" : "\(Storico.descrivi(m.turno)) · pausa \(pausa) min"
+        Storico.aggiungi("A mano", formatoGiorno(giorno, "EEE d MMM").capitalized + ": turno modificato",
+                         "\(Storico.descrivi(prima)) → \(dopo)")
         chiudi()
     }
 }
@@ -685,6 +705,8 @@ struct ImportaSuperShift: View {
             contesto.insert(m)
             if g.fine < .now { Conferme.conferma(g.giorno) }
         }
+        Storico.aggiungi("Importazione", "SuperShift: \(giorni.count) giorni importati",
+                         "\(formatoGiorno(giorni.first!.giorno, "d MMM yyyy")) – \(formatoGiorno(giorni.last!.giorno, "d MMM yyyy"))")
         chiudi()
     }
 }
@@ -784,16 +806,24 @@ struct NuovoMemo: View {
 // MARK: - Ore
 
 struct OreView: View {
+    @Query var manuali: [TurnoManuale]
     var turni: [Turno]
-    @State private var perMese = false
+    @State private var modo = 0          // 0 settimana, 1 mese, 2 banca ore, 3 anno
     @State private var spostamento = 0
+    @AppStorage("ferieAnno") var ferieAnno = 26
+    @AppStorage("permessiAnno") var permessiAnno = 72
 
     var periodo: (Date, Date) {
         let c = Calendar.current
-        if perMese {
+        if modo == 1 {
             let m = c.date(from: c.dateComponents([.year, .month], from: .now))!
             let da = c.date(byAdding: .month, value: spostamento, to: m)!
             return (da, c.date(byAdding: .month, value: 1, to: da)!)
+        }
+        if modo >= 2 {
+            let y = c.date(from: c.dateComponents([.year], from: .now))!
+            let da = c.date(byAdding: .year, value: spostamento, to: y)!
+            return (da, c.date(byAdding: .year, value: 1, to: da)!)
         }
         let da = c.date(byAdding: .day, value: 7 * spostamento, to: Calcoli.inizioSettimana(.now))!
         return (da, c.date(byAdding: .day, value: 7, to: da)!)
@@ -801,47 +831,178 @@ struct OreView: View {
 
     var body: some View {
         let (da, a) = periodo
-        let lista = turni.filter { $0.inizio >= da && $0.inizio < a }
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Ore").font(.largeTitle.bold())
-                Picker("", selection: $perMese) {
-                    Text("Settimana").tag(false)
-                    Text("Mese").tag(true)
+                Picker("", selection: $modo) {
+                    Text("Settimana").tag(0)
+                    Text("Mese").tag(1)
+                    Text("Banca ore").tag(2)
+                    Text("Anno").tag(3)
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: perMese) { spostamento = 0 }
+                .onChange(of: modo) { spostamento = 0 }
                 HStack {
                     Button { spostamento -= 1 } label: { Image(systemName: "chevron.left") }
                     Spacer()
-                    Text(perMese ? formatoGiorno(da, "MMMM yyyy").capitalized
+                    Text(modo >= 2 ? formatoGiorno(da, "yyyy") : modo == 1 ? formatoGiorno(da, "MMMM yyyy").capitalized
                          : "\(formatoGiorno(da, "d MMM")) – \(formatoGiorno(a.addingTimeInterval(-1), "d MMM"))")
                         .font(.headline)
                     Spacer()
                     Button { spostamento += 1 } label: { Image(systemName: "chevron.right") }
                 }
-                Riquadro {
-                    Text(oreMinuti(Calcoli.ore(turni, da: da, a: a))).font(.system(size: 34, weight: .heavy))
-                    Text(centesimi(Calcoli.ore(turni, da: da, a: a))).font(.headline).foregroundStyle(.secondary)
-                    Riga(titolo: "☀️ Mattine", valore: "\(lista.filter { $0.tipo == .mattina }.count)")
-                    Riga(titolo: "🌙 Pomeriggi", valore: "\(lista.filter { $0.tipo == .pomeriggio }.count)")
-                }
-                Riquadro {
-                    if lista.isEmpty { Text("Nessun turno").foregroundStyle(.secondary) }
-                    ForEach(lista) { t in
-                        HStack {
-                            Text(formatoGiorno(t.inizio, "EEE d").capitalized)
-                            Spacer()
-                            Text(t.orario).font(.caption.bold()).foregroundStyle(.white)
-                                .padding(.horizontal, 9).padding(.vertical, 3)
-                                .background(t.tipo.colore, in: RoundedRectangle(cornerRadius: 8))
-                        }
-                    }
+                switch modo {
+                case 2: bancaOre(da, a)
+                case 3: anno(da, a)
+                default: elenco(da, a)
                 }
             }
             .padding(16)
         }
         .background(AppColor.sfondo)
+    }
+
+    @ViewBuilder func elenco(_ da: Date, _ a: Date) -> some View {
+        let lista = turni.filter { $0.inizio >= da && $0.inizio < a }
+        Riquadro {
+            Text(oreMinuti(Calcoli.ore(turni, da: da, a: a))).font(.system(size: 34, weight: .heavy))
+            Text(centesimi(Calcoli.ore(turni, da: da, a: a))).font(.headline).foregroundStyle(.secondary)
+            Riga(titolo: "☀️ Mattine", valore: "\(lista.filter { $0.tipo == .mattina && !$0.assenza }.count)")
+            Riga(titolo: "🌙 Pomeriggi", valore: "\(lista.filter { $0.tipo == .pomeriggio && !$0.assenza }.count)")
+        }
+        Riquadro {
+            if lista.isEmpty { Text("Nessun turno").foregroundStyle(.secondary) }
+            ForEach(lista) { t in
+                HStack {
+                    Text(formatoGiorno(t.inizio, "EEE d").capitalized)
+                    Spacer()
+                    Text(t.assenza ? (t.codice ?? "") : t.orario).font(.caption.bold()).foregroundStyle(.white)
+                        .padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(t.assenza ? AppColor.fng : t.tipo.colore, in: RoundedRectangle(cornerRadius: 8))
+                    OreTesto(ore: t.ore).frame(width: 84, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    func saldoTesto(_ h: Double) -> some View {
+        Text((h >= 0 ? "+" : "−") + oreMinuti(abs(h))).bold().foregroundStyle(h >= 0 ? AppColor.fng : .red)
+    }
+
+    @ViewBuilder func bancaOre(_ da: Date, _ a: Date) -> some View {
+        let totale = BancaOre.saldo(turni, da: da, a: a)
+        Riquadro {
+            Text("SALDO DELL'ANNO").font(.caption.bold()).foregroundStyle(.secondary)
+            Text((totale >= 0 ? "+" : "−") + oreMinuti(abs(totale)))
+                .font(.system(size: 36, weight: .heavy)).foregroundStyle(totale >= 0 ? AppColor.fng : .red)
+            Text("\(totale >= 0 ? "+" : "−")\(centesimi(abs(totale))) rispetto alle \(Int(Calcoli.oreContratto)) h settimanali")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        Riquadro {
+            Text("Mese per mese").font(.headline)
+            ForEach((0..<12).reversed(), id: \.self) { i in
+                let m = Calendar.current.date(byAdding: .month, value: i, to: da)!
+                let fine = Calendar.current.date(byAdding: .month, value: 1, to: m)!
+                if m <= .now {
+                    HStack {
+                        Text(formatoGiorno(m, "MMMM").capitalized)
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 0) {
+                            saldoTesto(BancaOre.saldo(turni, da: m, a: fine))
+                            Text(oreMinuti(Calcoli.ore(turni, da: m, a: fine)) + " fatte").font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
+                    .font(.subheadline)
+                }
+            }
+            Text("Conta le settimane finite (da lunedì a domenica); quelle senza turni, come le ferie, non contano.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder func anno(_ da: Date, _ a: Date) -> some View {
+        let lista = turni.filter { $0.inizio >= da && $0.inizio < a }
+        let lavoro = lista.filter { !$0.assenza }
+        let domeniche = lavoro.filter { Calendar.current.component(.weekday, from: $0.inizio) == 1 }.count
+        let settimane = Calcoli.settimane(mese: da) + (1..<12).flatMap { Calcoli.settimane(mese: Calendar.current.date(byAdding: .month, value: $0, to: da)!) }
+        let fng = Set(settimane).filter { Calcoli.fng(turni, lunedi: $0) && $0 >= Calcoli.inizioSettimana(da) && $0 < a }.count
+        let ferieUsate = manuali.filter { $0.codice == "FER" && $0.giorno >= da && $0.giorno < a }.count
+        let permessi = lista.filter { $0.codice == "PE" }.reduce(0) { $0 + $1.ore }
+        let festivita = lista.filter { $0.codice == "FE" }
+        LazyVGrid(columns: [GridItem(), GridItem()], spacing: 8) {
+            casella("ORE TOTALI", oreMinuti(Calcoli.ore(turni, da: da, a: a)), centesimi(Calcoli.ore(turni, da: da, a: a)))
+            casella("BANCA ORE", (BancaOre.saldo(turni, da: da, a: a) >= 0 ? "+" : "−") + oreMinuti(abs(BancaOre.saldo(turni, da: da, a: a))), nil)
+            casella("☀️ MATTINE", "\(lavoro.filter { $0.tipo == .mattina }.count)", nil)
+            casella("🌙 POMERIGGI", "\(lavoro.filter { $0.tipo == .pomeriggio }.count)", nil)
+            casella("DOMENICHE LAVORATE", "\(domeniche)", nil)
+            casella("FNG", "\(fng)", nil)
+        }
+        Riquadro {
+            Text("Ore per mese").font(.headline)
+            let mesi = (0..<12).map { i -> Double in
+                let m = Calendar.current.date(byAdding: .month, value: i, to: da)!
+                return Calcoli.ore(turni, da: m, a: Calendar.current.date(byAdding: .month, value: 1, to: m)!)
+            }
+            let massimo = max(mesi.max() ?? 1, 1)
+            HStack(alignment: .bottom, spacing: 6) {
+                ForEach(0..<12, id: \.self) { i in
+                    VStack(spacing: 3) {
+                        RoundedRectangle(cornerRadius: 4).fill(AppColor.mattina)
+                            .frame(height: max(2, 100 * mesi[i] / massimo))
+                        Text(["G", "F", "M", "A", "M", "G", "L", "A", "S", "O", "N", "D"][i]).font(.system(size: 9)).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 118, alignment: .bottom)
+        }
+        Riquadro {
+            Text("Ferie e permessi").font(.headline)
+            barra("🏖️ Ferie", usato: Double(ferieUsate), totale: Double(ferieAnno), testo: "\(max(0, ferieAnno - ferieUsate)) giorni rimasti su \(ferieAnno)")
+            barra("📄 Permessi", usato: permessi, totale: Double(permessiAnno), testo: "\(oreMinuti(max(0, Double(permessiAnno) - permessi))) rimaste su \(permessiAnno) h")
+            Riga(titolo: "🎉 Festività", valore: "\(festivita.count) · \(oreMinuti(festivita.reduce(0) { $0 + $1.ore }))")
+            if let lungo = lavoro.max(by: { $0.ore < $1.ore }) {
+                Riga(titolo: "Turno più lungo", valore: "\(oreMinuti(lungo.ore)) · \(formatoGiorno(lungo.inizio, "d MMM"))")
+            }
+            Riga(titolo: "Missioni", valore: "\(lista.filter { $0.codice == "MI" }.count)")
+            Text("I totali annui di ferie e permessi si cambiano in Altro.").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    func casella(_ titolo: String, _ valore: String, _ sotto: String?) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(titolo).font(.caption2.bold()).foregroundStyle(.secondary)
+            Text(valore).font(.title3.weight(.heavy)).minimumScaleFactor(0.6).lineLimit(1)
+            if let sotto { Text(sotto).font(.caption2).foregroundStyle(.secondary) }
+        }
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        .padding(12)
+        .background(.white, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    func barra(_ titolo: String, usato: Double, totale: Double, testo: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack { Text(titolo).bold(); Spacer(); Text(testo).font(.caption).foregroundStyle(.secondary) }
+            ProgressView(value: min(usato, totale), total: max(totale, 1)).tint(AppColor.fng)
+        }
+        .font(.subheadline)
+    }
+}
+
+struct StoricoView: View {
+    var body: some View {
+        let tutte = Storico.tutte()
+        List {
+            if tutte.isEmpty { Text("Ancora nessuna modifica.").foregroundStyle(.secondary) }
+            ForEach(tutte) { m in
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(formatoGiorno(m.quando, "d MMM HH:mm")) · \(m.fonte)".uppercased()).font(.caption2.bold()).foregroundStyle(.secondary)
+                    Text(m.titolo).font(.subheadline.bold())
+                    if !m.dettaglio.isEmpty { Text(m.dettaglio).font(.subheadline) }
+                }
+            }
+        }
+        .navigationTitle("Storico modifiche")
     }
 }
 
@@ -851,6 +1012,10 @@ struct AltroView: View {
     @EnvironmentObject var stato: Stato
     var turni: [Turno]
     @AppStorage("nome") var nome = ""
+    @AppStorage("ferieAnno") var ferieAnno = 26
+    @AppStorage("permessiAnno") var permessiAnno = 72
+    @AppStorage("avvisoSveglia") var avvisoSveglia = true
+    @AppStorage("oraAvvisoSveglia") var oraAvvisoSveglia = 21 * 60
     @AppStorage("condividiTurni") var condividiTurni = false
     @AppStorage("condividiMemo") var condividiMemo = false
     @State private var errore: String?
@@ -916,7 +1081,19 @@ struct AltroView: View {
                 }
 
                 Section {
-                    Button("Importa PDF da SuperShift") { scegliPDF = true }
+                    NavigationLink("🕘 Storico modifiche") { StoricoView() }
+                    Stepper("Ferie all'anno: \(ferieAnno) giorni", value: $ferieAnno, in: 0...60)
+                    Stepper("Permessi all'anno: \(permessiAnno) h", value: $permessiAnno, in: 0...300, step: 4)
+                    Toggle("Avviso sveglia la sera prima", isOn: $avvisoSveglia)
+                    if avvisoSveglia { orario("Ora dell'avviso", $oraAvvisoSveglia) }
+                } header: {
+                    Text("Storico, ferie e sveglia")
+                } footer: {
+                    Text("Le ferie si segnano toccando un giorno nel Calendario. L'avviso ti ricorda di mettere la sveglia e apre l'app Orologio.")
+                }
+
+                Section {
+                    Button("Importa PDF da SuperShift (anche più file)") { scegliPDF = true }
                 } header: {
                     Text("Turni passati")
                 } footer: {
@@ -947,11 +1124,16 @@ struct AltroView: View {
                 }
             }
             .navigationTitle("Altro")
-            .fileImporter(isPresented: $scegliPDF, allowedContentTypes: [.pdf]) { esito in
-                guard case .success(let url) = esito else { return }
-                let accesso = url.startAccessingSecurityScopedResource()
-                defer { if accesso { url.stopAccessingSecurityScopedResource() } }
-                importati = SuperShift.leggi(SuperShift.testo(pdf: url) ?? "")
+            .fileImporter(isPresented: $scegliPDF, allowedContentTypes: [.pdf], allowsMultipleSelection: true) { esito in
+                guard case .success(let urls) = esito else { return }
+                // Si possono scegliere più PDF insieme (es. uno per anno): i giorni si uniscono.
+                var tutti: [Date: GiornoImportato] = [:]
+                for url in urls {
+                    let accesso = url.startAccessingSecurityScopedResource()
+                    defer { if accesso { url.stopAccessingSecurityScopedResource() } }
+                    for g in SuperShift.leggi(SuperShift.testo(pdf: url) ?? "") { tutti[g.giorno] = g }
+                }
+                importati = tutti.values.sorted { $0.giorno < $1.giorno }
                 if importati.isEmpty { errore = "Nel PDF non ho trovato orari di SuperShift." } else { anteprima = true }
             }
             .sheet(isPresented: $anteprima) { ImportaSuperShift(giorni: importati) }

@@ -86,6 +86,19 @@ enum Calcoli {
         turni.filter { $0.inizio >= da && $0.inizio < a }.reduce(0) { $0 + $1.ore }
     }
 
+    /// Turni cambiati da un controllo all'altro, da `da` in poi: per ogni giorno com'era e com'è.
+    static func cambi(prima: [Turno], dopo: [Turno], da: Date, cal c: Calendar = .current) -> [(giorno: Date, prima: Turno?, dopo: Turno?)] {
+        func perGiorno(_ t: [Turno]) -> [Date: Turno] {
+            Dictionary(t.filter { $0.inizio >= da }.map { (c.startOfDay(for: $0.inizio), $0) }, uniquingKeysWith: { a, _ in a })
+        }
+        let p = perGiorno(prima), d = perGiorno(dopo)
+        return Set(p.keys).union(d.keys).sorted().compactMap { g in
+            let a = p[g], b = d[g]
+            if a?.inizio == b?.inizio && a?.fine == b?.fine { return nil }
+            return (g, a, b)
+        }
+    }
+
     /// Toglie i doppioni: lo stesso turno in due calendari (es. Dayforce e SuperShift) conta una volta.
     static func senzaDoppioni(_ turni: [Turno]) -> [Turno] {
         var visti = Set<String>()
@@ -211,5 +224,62 @@ enum Archivio {
     static func carica() -> [Turno] {
         guard let d = defaults.data(forKey: "turni") else { return [] }
         return (try? JSONDecoder().decode([Turno].self, from: d)) ?? []
+    }
+}
+
+// Storico delle modifiche: ogni cambio di turno resta registrato con data, origine e "prima → dopo".
+struct Modifica: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var quando: Date
+    var fonte: String       // "Dayforce", "A mano", "Conferma", "Importazione"
+    var titolo: String
+    var dettaglio: String
+}
+
+enum Storico {
+    static func tutte() -> [Modifica] {
+        guard let d = Archivio.defaults.data(forKey: "storico") else { return [] }
+        return (try? JSONDecoder().decode([Modifica].self, from: d)) ?? []
+    }
+
+    static func aggiungi(_ fonte: String, _ titolo: String, _ dettaglio: String = "", quando: Date = .now) {
+        let nuove = ([Modifica(quando: quando, fonte: fonte, titolo: titolo, dettaglio: dettaglio)] + tutte()).prefix(1000)
+        if let d = try? JSONEncoder().encode(Array(nuove)) { Archivio.defaults.set(d, forKey: "storico") }
+    }
+
+    /// "☀️ 06:00–13:30", oppure "😴 Riposo".
+    static func descrivi(_ t: Turno?) -> String {
+        guard let t else { return "😴 Riposo" }
+        return "\(t.tipo.emoji) \(Turno.ora(t.inizio))–\(Turno.ora(t.fine))"
+    }
+}
+
+// Banca ore: quante ore in più (o in meno) rispetto alle 40 settimanali.
+enum BancaOre {
+    /// Saldo di una settimana (lunedì): ore pagate meno 40. Le settimane senza turni (es. ferie) non contano.
+    static func settimana(_ turni: [Turno], lunedi: Date) -> Double? {
+        let fineVera = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)!
+        let sett = turni.filter { $0.inizio >= lunedi && $0.inizio < fineVera }
+        guard !sett.isEmpty else { return nil }
+        return sett.reduce(0) { $0 + $1.ore } - Calcoli.oreContratto
+    }
+
+    /// Saldo delle settimane già finite che iniziano tra `da` e `a`.
+    static func saldo(_ turni: [Turno], da: Date, a: Date, ora: Date = .now) -> Double {
+        var lunedi = Calcoli.inizioSettimana(da)
+        if lunedi < da { lunedi = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)! }
+        var totale = 0.0
+        while lunedi < a {
+            let fine = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)!
+            if fine <= ora, let s = settimana(turni, lunedi: lunedi) { totale += s }
+            lunedi = fine
+        }
+        return totale
+    }
+
+    static func daInizioAnno(_ turni: [Turno], ora: Date = .now) -> Double {
+        let c = Calendar.current
+        let inizio = c.date(from: c.dateComponents([.year], from: ora))!
+        return saldo(turni, da: inizio, a: ora, ora: ora)
     }
 }

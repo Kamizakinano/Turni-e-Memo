@@ -147,6 +147,35 @@ final class CalcoliTests: XCTestCase {
         XCTAssertNil(Conferme.daConfermare([turno(10, 6, 14)], ora: ora(19, 14), confermato: { _ in false }))
     }
 
+    func testBancaOre() {
+        // Settimana 19–25 ottobre: 5 turni da 9h11m = 45 ore pagate → +5 h.
+        let turni = (19...23).map { Turno(id: "\($0)", inizio: ora($0, 6), fine: ora($0, 15, 11)) }
+        XCTAssertEqual(BancaOre.settimana(turni, lunedi: ora(19, 0)) ?? 0, 5, accuracy: 0.0001)
+        // Settimana senza turni (ferie): non conta.
+        XCTAssertNil(BancaOre.settimana(turni, lunedi: ora(12, 0)))
+        // Il saldo conta solo le settimane finite.
+        XCTAssertEqual(BancaOre.saldo(turni, da: ora(1, 0), a: ora(31, 0), ora: ora(24, 12)), 0, accuracy: 0.0001)
+        XCTAssertEqual(BancaOre.saldo(turni, da: ora(1, 0), a: ora(31, 0), ora: ora(27, 12)), 5, accuracy: 0.0001)
+    }
+
+    func testCambiDiDayforce() {
+        let prima = [turno(20, 6, 14), turno(21, 6, 14), turno(22, 14, 22)]
+        let dopo = [turno(20, 6, 14), turno(21, 14, 22), turno(23, 6, 14)]
+        let c = Calcoli.cambi(prima: prima, dopo: dopo, da: ora(20, 0))
+        XCTAssertEqual(c.count, 3)
+        XCTAssertEqual(c[0].prima?.id, "21-6"); XCTAssertEqual(c[0].dopo?.id, "21-14")   // cambiato
+        XCTAssertNil(c[1].dopo)                                                         // tolto il 22
+        XCTAssertNil(c[2].prima)                                                        // aggiunto il 23
+        // I giorni passati non contano.
+        XCTAssertTrue(Calcoli.cambi(prima: prima, dopo: dopo, da: ora(24, 0)).isEmpty)
+    }
+
+    func testStorico() {
+        Storico.aggiungi("A mano", "Prova", "☀️ 06:00–13:30 → ☀️ 06:00–14:30")
+        XCTAssertEqual(Storico.tutte().first?.titolo, "Prova")
+        XCTAssertEqual(Storico.descrivi(nil), "😴 Riposo")
+    }
+
     func testArchivioSalvaECarica() {
         let turni = [turno(19, 6, 14)]
         Archivio.salva(turni)

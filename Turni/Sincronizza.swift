@@ -10,10 +10,12 @@ final class Stato: ObservableObject {
     @Published var daCalendario: [Turno] = Archivio.carica().filter { !$0.manuale }
     @Published var accesso = EKEventStore.authorizationStatus(for: .event) == .fullAccess
     @Published var scelti: [String] = UserDefaults.standard.stringArray(forKey: "calendari") ?? [] {
-        didSet { UserDefaults.standard.set(scelti, forKey: "calendari"); leggi() }
+        didSet { UserDefaults.standard.set(scelti, forKey: "calendari"); ignoraCambi = true; leggi() }
     }
 
     let store = EKEventStore()
+    /// Quando cambi i calendari scelti, i turni "cambiati" non sono cambi veri di Dayforce.
+    private var ignoraCambi = false
     /// Turni e memo delle altre persone (calendari "Turni <nome>" condivisi con te).
     @Published var condivisi: [Persona] = []
 
@@ -67,7 +69,28 @@ final class Stato: ObservableObject {
                 .map { Turno(id: $0.eventIdentifier ?? UUID().uuidString, inizio: $0.startDate, fine: $0.endDate) }
         }
         let senza = Calcoli.soloTurni(nuovi)
-        if senza != daCalendario { daCalendario = senza }
+        if senza != daCalendario {
+            if !ignoraCambi && !daCalendario.isEmpty { registraCambi(prima: daCalendario, dopo: senza) }
+            daCalendario = senza
+        }
+        ignoraCambi = false
+    }
+
+    /// Turni cambiati in Dayforce (da oggi in poi): finiscono nello storico e arriva un avviso.
+    func registraCambi(prima: [Turno], dopo: [Turno]) {
+        let cambi = Calcoli.cambi(prima: prima, dopo: dopo, da: Calendar.current.startOfDay(for: .now))
+        guard !cambi.isEmpty, cambi.count <= 20 else { return }   // tanti cambi insieme = calendario nuovo, non un cambio di turno
+        for c in cambi {
+            let giorno = formatoGiorno(c.giorno, "EEE d MMM").capitalized
+            let cosa = c.prima == nil ? "turno aggiunto" : c.dopo == nil ? "turno tolto" : "turno cambiato"
+            let dettaglio = "\(Storico.descrivi(c.prima)) → \(Storico.descrivi(c.dopo))"
+            Storico.aggiungi("Dayforce", "\(giorno): \(cosa)", dettaglio)
+            let n = UNMutableNotificationContent()
+            n.title = "🔁 Dayforce ha cambiato un turno"
+            n.body = "\(giorno): \(dettaglio)"
+            n.sound = .default
+            UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "cambio-\(UUID().uuidString)", content: n, trigger: nil))
+        }
     }
 
     /// Salva i turni per il widget e aggiorna conto alla rovescia e avvisi.
@@ -138,6 +161,21 @@ enum Avvisi {
                 c.categoryIdentifier = "PAUSA"
                 c.userInfo = ["turno": t.id]
                 aggiungi(centro, "pausa-\(t.id)", c, quando)
+            }
+            // La sera prima di ogni turno: ricordati la sveglia.
+            let oraSveglia = UserDefaults.standard.object(forKey: "oraAvvisoSveglia") as? Int ?? 21 * 60
+            if UserDefaults.standard.object(forKey: "avvisoSveglia") as? Bool ?? true {
+                for t in turni where t.inizio < limite && !t.assenza {
+                    guard let ieri = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: t.inizio)),
+                          let quando = Calendar.current.date(byAdding: .minute, value: oraSveglia, to: ieri),
+                          quando > ora, quando < t.inizio else { continue }
+                    let c = UNMutableNotificationContent()
+                    c.title = "⏰ Domani attacchi alle \(Turno.ora(t.inizio))"
+                    c.body = "Ricordati di mettere la sveglia."
+                    c.sound = .default
+                    c.categoryIdentifier = "SVEGLIA"
+                    aggiungi(centro, "sveglia-\(t.id)", c, quando)
+                }
             }
             for (id, testo, quando) in memo where quando > ora {
                 let c = UNMutableNotificationContent()

@@ -23,11 +23,20 @@ final class Delegato: NSObject, UIApplicationDelegate, UNUserNotificationCenterD
         centro.delegate = self
         let fatta = UNNotificationAction(identifier: "FATTA", title: "✅ Fatta")
         let inizio = UNNotificationAction(identifier: "INIZIO", title: "⏱ Inizio ora")
-        centro.setNotificationCategories([UNNotificationCategory(identifier: "PAUSA", actions: [fatta, inizio], intentIdentifiers: [])])
+        let sveglie = UNNotificationAction(identifier: "SVEGLIE", title: "⏰ Apri Sveglie", options: [.foreground])
+        centro.setNotificationCategories([
+            UNNotificationCategory(identifier: "PAUSA", actions: [fatta, inizio], intentIdentifiers: []),
+            UNNotificationCategory(identifier: "SVEGLIA", actions: [sveglie], intentIdentifiers: [])
+        ])
         return true
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        if response.actionIdentifier == "SVEGLIE" || response.notification.request.content.categoryIdentifier == "SVEGLIA" {
+            // Apre l'app Orologio sulle sveglie.
+            if let url = URL(string: "clock-alarm://") { await UIApplication.shared.open(url) }
+            return
+        }
         let id = response.notification.request.content.userInfo["turno"] as? String ?? ""
         guard !id.isEmpty else { return }
         switch response.actionIdentifier {

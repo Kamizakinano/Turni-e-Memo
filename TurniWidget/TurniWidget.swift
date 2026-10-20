@@ -6,6 +6,8 @@ import ActivityKit
 struct TurniWidgetBundle: WidgetBundle {
     var body: some Widget {
         TurnoWidget()
+        SettimanaWidget()
+        ProssimiWidget()
         TurnoLiveActivity()
     }
 }
@@ -65,8 +67,8 @@ struct VistaWidget: View {
             if let t = voce.inCorso {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("\(t.tipo.emoji) Mancano").font(.caption.bold())
-                    Text(t.fine, style: .timer).font(.title3.bold()).monospacedDigit()
-                    ProgressView(timerInterval: t.inizio...t.fine, countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
+                    Mancano(fine: t.fine).font(.title3.bold()).monospacedDigit()
+                    Avanzamento(inizio: t.inizio, fine: t.fine)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 1) {
@@ -80,8 +82,8 @@ struct VistaWidget: View {
             VStack(alignment: .leading, spacing: 4) {
                 if let t = voce.inCorso {
                     Text("\(t.tipo.emoji) MANCANO").font(.caption.bold()).foregroundStyle(.secondary)
-                    Text(t.fine, style: .timer).font(.title.bold()).monospacedDigit()
-                    ProgressView(timerInterval: t.inizio...t.fine, countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
+                    Mancano(fine: t.fine).font(.title.bold()).monospacedDigit()
+                    Avanzamento(inizio: t.inizio, fine: t.fine)
                         .tint(t.tipo.colore)
                     Text(t.orario).font(.caption)
                 } else {
@@ -121,18 +123,18 @@ struct TurnoLiveActivity: Widget {
                     Text("\(tipo.emoji) Turno di \(tipo.nome.lowercased())").font(.subheadline.bold())
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(ctx.state.fine, style: .timer).font(.title3.bold()).monospacedDigit()
+                    Mancano(fine: ctx.state.fine).font(.title3.bold()).monospacedDigit()
                         .foregroundStyle(AppColor.mattina).multilineTextAlignment(.trailing)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(timerInterval: ctx.state.inizio...ctx.state.fine, countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
+                    Avanzamento(inizio: ctx.state.inizio, fine: ctx.state.fine)
                         .tint(AppColor.mattina)
                     HStack { Text(Turno.ora(ctx.state.inizio)); Spacer(); Text(Turno.ora(ctx.state.fine)) }.font(.caption)
                 }
             } compactLeading: {
                 Text(tipo.emoji)
             } compactTrailing: {
-                Text(ctx.state.fine, style: .timer).monospacedDigit().frame(maxWidth: 52)
+                Mancano(fine: ctx.state.fine).monospacedDigit().frame(maxWidth: 52)
                     .foregroundStyle(AppColor.mattina)
             } minimal: {
                 Text(tipo.emoji)
@@ -158,11 +160,11 @@ struct Schermata: View {
                     }
                     Spacer()
                     if !finito {
-                        Text(stato.fine, style: .timer).font(.system(size: 34, weight: .bold)).monospacedDigit()
+                        Mancano(fine: stato.fine).font(.system(size: 34, weight: .bold)).monospacedDigit()
                             .multilineTextAlignment(.trailing)
                     }
                 }
-                ProgressView(timerInterval: stato.inizio...stato.fine, countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
+                Avanzamento(inizio: stato.inizio, fine: stato.fine)
                     .tint(tipo.colore)
                 HStack { Text(Turno.ora(stato.inizio)); Spacer(); Text(Turno.ora(stato.fine)) }
                     .font(.caption).foregroundStyle(.gray)
@@ -174,4 +176,124 @@ struct Schermata: View {
             .padding(14)
         }
     }
+}
+
+// MARK: - Poca batteria: il tempo cambia una volta al minuto e la barra non si anima
+
+struct Mancano: View {
+    var fine: Date
+    var body: some View {
+        if #available(iOS 18.0, *) {
+            Text(.currentDate, format: .timer(countingDownIn: Date.now..<max(fine, Date.now.addingTimeInterval(1)),
+                                              showsHours: true, maxFieldCount: 2, maxPrecision: .seconds(60)))
+        } else {
+            Text(fine, style: .timer)
+        }
+    }
+}
+
+struct Avanzamento: View {
+    var inizio: Date
+    var fine: Date
+    var body: some View {
+        let tot = max(1, fine.timeIntervalSince(inizio))
+        ProgressView(value: min(tot, max(0, Date.now.timeIntervalSince(inizio))), total: tot)
+    }
+}
+
+// MARK: - Widget nella Home
+
+struct VoceHome: TimelineEntry {
+    let date: Date
+    let turni: [Turno]
+}
+
+struct FornitoreHome: TimelineProvider {
+    func placeholder(in context: Context) -> VoceHome { VoceHome(date: .now, turni: []) }
+    func getSnapshot(in context: Context, completion: @escaping (VoceHome) -> Void) {
+        completion(VoceHome(date: .now, turni: Archivio.carica()))
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<VoceHome>) -> Void) {
+        let turni = Archivio.carica()
+        let ora = Date.now
+        // Si aggiorna a mezzanotte e alla fine di ogni turno di oggi, non di continuo.
+        var punti: Set<Date> = [ora]
+        if let m = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: ora)) { punti.insert(m) }
+        for t in turni where t.fine > ora && t.fine < ora.addingTimeInterval(86400) { punti.insert(t.fine) }
+        completion(Timeline(entries: punti.sorted().map { VoceHome(date: $0, turni: turni) }, policy: .atEnd))
+    }
+}
+
+struct SettimanaWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "SettimanaWidget", provider: FornitoreHome()) { v in
+            let lunedi = Calcoli.inizioSettimana(v.date)
+            let fine = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)!
+            let ore = Calcoli.ore(v.turni, da: lunedi, a: fine)
+            let domenica = Calcoli.turno(v.turni, giorno: Calendar.current.date(byAdding: .day, value: 6, to: lunedi)!) != nil
+            VStack(alignment: .leading, spacing: 3) {
+                Text("SETTIMANA \(Calcoli.kw(lunedi))").font(.caption2.bold()).foregroundStyle(.secondary)
+                Text(oreBreve(ore)).font(.title2.weight(.heavy)).minimumScaleFactor(0.7)
+                Text(String(format: "%.2f h su 40", ore).replacingOccurrences(of: ".", with: ",")).font(.caption2).foregroundStyle(.secondary)
+                ProgressView(value: min(ore, 44), total: 44).tint(AppColor.mattina)
+                if Calcoli.fng(v.turni, lunedi: lunedi) {
+                    Text("✅ FNG").font(.caption.bold()).foregroundStyle(AppColor.fng)
+                } else if domenica {
+                    Text("FNG: lavori domenica").font(.caption2.bold()).foregroundStyle(AppColor.fng)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .containerBackground(.white, for: .widget)
+        }
+        .configurationDisplayName("Ore della settimana")
+        .description("Ore pagate della settimana e FNG.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+struct ProssimiWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "ProssimiWidget", provider: FornitoreHome()) { v in
+            let oggi = Calendar.current.startOfDay(for: v.date)
+            let saldo = BancaOre.daInizioAnno(v.turni, ora: v.date)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("PROSSIMI GIORNI").font(.caption2.bold()).foregroundStyle(.secondary)
+                    Spacer()
+                    Text("banca ore " + (saldo >= 0 ? "+" : "−") + oreBreve(abs(saldo))).font(.caption2.bold())
+                        .foregroundStyle(saldo >= 0 ? AppColor.fng : .red)
+                }
+                HStack(spacing: 5) {
+                    ForEach(0..<5, id: \.self) { i in
+                        let g = Calendar.current.date(byAdding: .day, value: i, to: oggi)!
+                        let t = Calcoli.turno(v.turni, giorno: g)
+                        VStack(spacing: 1) {
+                            Text(i == 0 ? "OGGI" : giornoBreve(g)).font(.system(size: 10, weight: .heavy))
+                            Text(t.map { Turno.ora($0.inizio) } ?? "—").font(.system(size: 11, weight: .semibold))
+                            Text(t.map { Turno.ora($0.fine) } ?? " ").font(.system(size: 11, weight: .semibold))
+                        }
+                        .foregroundStyle(t == nil ? Color.primary : .white)
+                        .frame(maxWidth: .infinity, minHeight: 58)
+                        .background(t?.tipo.colore ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+            }
+            .containerBackground(.white, for: .widget)
+        }
+        .configurationDisplayName("Prossimi turni")
+        .description("I turni dei prossimi 5 giorni e la banca ore.")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+func oreBreve(_ ore: Double) -> String {
+    let m = Int((ore * 60).rounded())
+    return m % 60 == 0 ? "\(m / 60) h" : "\(m / 60) h \(m % 60)"
+}
+
+func giornoBreve(_ d: Date) -> String {
+    let f = DateFormatter()
+    f.locale = Locale(identifier: "it_IT")
+    f.dateFormat = "EEE d"
+    return f.string(from: d).uppercased()
 }
