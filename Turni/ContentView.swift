@@ -23,9 +23,7 @@ struct ContentView: View {
     var body: some View {
         TabView {
             OggiView(turni: turniVisti, nome: persona?.nome, chi: $chi)
-                .tabItem { Label("Oggi", systemImage: "sun.max.fill") }
-            CalendarioView(turni: turniVisti, nome: persona?.nome, chi: $chi)
-                .tabItem { Label("Calendario", systemImage: "calendar") }
+                .tabItem { Label("Turni", systemImage: "calendar") }
             MemoView()
                 .tabItem { Label("Memo", systemImage: "note.text") }
             OreView(turni: turni)
@@ -175,13 +173,13 @@ struct OggiView: View {
     func etichetta(_ t: String) -> String { nome.map { "\($0.uppercased()) · \(t)" } ?? t }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 30)) { ctx in
+        TimelineView(.periodic(from: .now, by: 60)) { ctx in
             let ora = ctx.date
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text("Oggi").font(.largeTitle.bold())
-                        Text(formatoGiorno(ora, "EEEE d MMMM").capitalized).foregroundStyle(.secondary)
+                        Text("· " + formatoGiorno(ora, "EEEE d MMMM").capitalized).foregroundStyle(.secondary)
                     }
                     SceltaPersona(chi: $chi)
                     if !stato.accesso {
@@ -193,9 +191,10 @@ struct OggiView: View {
                                 .buttonStyle(.borderedProminent).tint(AppColor.ardesia)
                         }
                     }
-                    cartaOggi(ora)
-                    settimana(ora)
-                    memoOggi
+                    if nome == nil, let d = Conferme.daConfermare(turni, ora: ora) { cartaConferma(d) }
+                    compatto(ora)
+                    // Calendario, ore della settimana e memo del giorno scelto, nella stessa pagina.
+                    CalendarioView(turni: turni, nome: nome)
                 }
                 .padding(16)
             }
@@ -247,6 +246,46 @@ struct OggiView: View {
             }
             cartaProssimo(ora)
         }
+    }
+
+    /// Oggi e domani (o il prossimo turno) in due riquadri piccoli, uno accanto all'altro.
+    @ViewBuilder func compatto(_ ora: Date) -> some View {
+        let oggi = Calcoli.inCorso(turni, ora: ora) ?? Calcoli.turno(turni, giorno: ora)
+        let attivo = oggi.map { $0.fine > ora } ?? false
+        let destra = attivo ? Calcoli.domani(turni, ora: ora) : Calcoli.prossimo(turni, dopo: ora)
+        HStack(alignment: .top, spacing: 8) {
+            if let t = oggi, attivo {
+                piccola(etichetta(t.inizio <= ora ? "TURNO IN CORSO" : "TURNO DI OGGI"), "\(t.tipo.emoji) \(t.tipo.nome)",
+                        t.orario, t.inizio <= ora ? "mancano \(durata(t.fine.timeIntervalSince(ora)))" : oreMinuti(t.ore),
+                        t.tipo.colore, pausa: t.inizio <= ora && nome == nil ? t : nil)
+            } else if let t = oggi {
+                piccola(etichetta("OGGI"), Conferme.confermato(t.inizio) ? "✅ Fatto" : "Turno finito", t.orario, oreMinuti(t.ore), .white)
+            } else {
+                piccola(etichetta("OGGI"), "😴 Riposo", "", "", AppColor.riposo)
+            }
+            if let p = destra {
+                let quando = attivo || Calendar.current.isDateInTomorrow(p.inizio) ? "DOMANI · " + formatoGiorno(p.inizio, "EEE d").uppercased()
+                    : "PROSSIMO · " + formatoGiorno(p.inizio, "EEE d MMM").uppercased()
+                piccola(etichetta(quando), "\(p.tipo.emoji) \(Turno.ora(p.inizio))", "fino alle \(Turno.ora(p.fine))", oreMinuti(p.ore), p.tipo.colore)
+            } else {
+                piccola(etichetta(attivo ? "DOMANI" : "PROSSIMO"), "😴 Riposo", "", "", AppColor.riposo)
+            }
+        }
+    }
+
+    func piccola(_ titolo: String, _ grande: String, _ riga1: String, _ riga2: String, _ sfondo: Color, pausa: Turno? = nil) -> some View {
+        let chiaro = sfondo == .white || sfondo == AppColor.riposo
+        return VStack(alignment: .leading, spacing: 3) {
+            Text(titolo).font(.caption2.bold()).opacity(0.9).lineLimit(1).minimumScaleFactor(0.7)
+            Text(grande).font(.title3.weight(.heavy)).lineLimit(1).minimumScaleFactor(0.7)
+            if !riga1.isEmpty { Text(riga1).font(.subheadline) }
+            if !riga2.isEmpty { Text(riga2).font(.caption.bold()) }
+            if let pausa { BottonePausa(turno: pausa) }
+        }
+        .foregroundStyle(chiaro ? Color.primary : .white)
+        .frame(maxWidth: .infinity, minHeight: 104, alignment: .topLeading)
+        .padding(12)
+        .background(sfondo, in: RoundedRectangle(cornerRadius: 18))
     }
 
     /// Il prossimo turno in grande, con il giorno.
@@ -372,9 +411,10 @@ struct BottonePausa: View {
             Pause.segna(turno.id, fatta: !fatta)
             fatta.toggle()
         } label: {
-            Label(fatta ? "Pausa fatta" : "Segna la pausa come fatta", systemImage: fatta ? "checkmark.circle.fill" : "cup.and.saucer")
+            Label(fatta ? "Pausa fatta" : "Pausa fatta?", systemImage: fatta ? "checkmark.circle.fill" : "cup.and.saucer")
                 .font(.subheadline.bold())
-                .padding(.horizontal, 12).padding(.vertical, 8)
+                .font(.caption.bold())
+                .padding(.horizontal, 10).padding(.vertical, 5)
                 .background(.white.opacity(0.25), in: Capsule())
         }
         .buttonStyle(.plain)
@@ -388,69 +428,141 @@ struct CalendarioView: View {
     @EnvironmentObject var stato: Stato
     @Environment(\.modelContext) var contesto
     @Query var manuali: [TurnoManuale]
+    @Query(sort: \Memo.giorno) var memo: [Memo]
     var turni: [Turno]
     var nome: String?
-    @Binding var chi: String?
     @State private var mese = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: .now))!
+    @State private var selezionato = Calendar.current.startOfDay(for: .now)
     @State private var scelto: Giorno?
+    @State private var nuovoMemo: Giorno?
 
     struct Giorno: Identifiable { var id: Date }
 
     var body: some View {
-        // Turni e ferie del mese visibile, cercati una volta sola invece che in ogni casella.
+        // Turni, ferie e memo del mese visibile, cercati una volta sola invece che in ogni casella.
         let settimane = Calcoli.settimane(mese: mese)
         let da = settimane.first ?? mese
         let a = Calendar.current.date(byAdding: .day, value: 7 * settimane.count, to: da)!
         let mappa = Dictionary(turni.filter { $0.inizio >= da && $0.inizio < a }.map { (Calendar.current.startOfDay(for: $0.inizio), $0) },
                                uniquingKeysWith: { x, y in x.inizio <= y.inizio ? x : y })
         let ferie = Set(manuali.filter { $0.codice == "FER" }.map { Calendar.current.startOfDay(for: $0.giorno) })
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(formatoGiorno(mese, "MMMM yyyy").capitalized).font(.largeTitle.bold())
-                    Spacer()
-                    Button { cambia(-1) } label: { Image(systemName: "chevron.left") }
-                    Button { cambia(1) } label: { Image(systemName: "chevron.right") }.padding(.leading, 10)
-                }
-                SceltaPersona(chi: $chi)
-                Text(nome.map { "Turni di \($0) (solo da vedere)" } ?? "Tocca un giorno per cambiare turno").foregroundStyle(.secondary)
-                Riquadro {
-                    // Righe semplici (non "pigre"): le caselle si disegnano una volta sola, non durante lo scorrimento.
-                    VStack(spacing: 5) {
-                        HStack(spacing: 5) {
-                            Color.clear.frame(width: 14, height: 1)
-                            ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
-                                Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
-                                    .frame(maxWidth: .infinity)
-                            }
+        let conMemo = Set(memo.filter { $0.giorno >= da && $0.giorno < a }.map { Calendar.current.startOfDay(for: $0.giorno) }
+                          + stato.condivisi.flatMap { $0.memo.map(\.giorno) })
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(formatoGiorno(mese, "MMMM yyyy").capitalized).font(.title2.bold())
+                Spacer()
+                Button { cambia(-1) } label: { Image(systemName: "chevron.left") }
+                Button { cambia(1) } label: { Image(systemName: "chevron.right") }.padding(.leading, 10)
+            }
+            Riquadro {
+                // Righe semplici (non "pigre"): le caselle si disegnano una volta sola, non durante lo scorrimento.
+                VStack(spacing: 5) {
+                    HStack(spacing: 5) {
+                        Color.clear.frame(width: 14, height: 1)
+                        ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
+                            Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity)
                         }
-                        ForEach(settimane, id: \.self) { lunedi in
-                            HStack(spacing: 5) {
-                                Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
-                                    .frame(width: 14)
-                                ForEach((0..<7).map { Calendar.current.date(byAdding: .day, value: $0, to: lunedi)! }, id: \.self) { g in
-                                    cella(g, mappa[g], ferie: ferie.contains(g))
-                                }
+                    }
+                    ForEach(settimane, id: \.self) { lunedi in
+                        HStack(spacing: 5) {
+                            Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
+                                .frame(width: 14)
+                            ForEach((0..<7).map { Calendar.current.date(byAdding: .day, value: $0, to: lunedi)! }, id: \.self) { g in
+                                cella(g, mappa[g], ferie: ferie.contains(g), memo: conMemo.contains(g))
                             }
                         }
                     }
                 }
-                riepilogo
-                orePerSettimana
             }
-            .padding(16)
+            settimanaScelta
+            memoDelGiorno
+            riepilogo
+            orePerSettimana
         }
-        .background(AppColor.sfondo)
         .sheet(item: $scelto) { g in
             SceltaTurno(giorno: g.id, dayforce: Calcoli.turno(stato.daCalendario, giorno: g.id))
                 .presentationDetents([.large])
         }
+        .sheet(item: $nuovoMemo) { g in NuovoMemo(giornoIniziale: g.id) }
     }
 
-    func cella(_ g: Date, _ t: Turno?, ferie: Bool) -> some View {
+    /// Le ore della settimana del giorno scelto.
+    var settimanaScelta: some View {
+        let lunedi = Calcoli.inizioSettimana(selezionato)
+        let fine = Calendar.current.date(byAdding: .day, value: 7, to: lunedi)!
+        let domenica = Calendar.current.date(byAdding: .day, value: 6, to: lunedi)!
+        let sett = turni.filter { $0.inizio >= lunedi && $0.inizio < fine }
+        let ore = sett.reduce(0) { $0 + $1.ore }
+        let fng = Calcoli.fng(turni, lunedi: lunedi)
+        let lavoraDomenica = Calcoli.turno(sett, giorno: domenica) != nil
+        return Riquadro {
+            HStack {
+                Text("\(Calcoli.kw(lunedi))").font(.caption.bold()).foregroundStyle(.secondary)
+                Text("Settimana \(formatoGiorno(lunedi, "d")) – \(formatoGiorno(domenica, "d MMM"))").font(.subheadline.bold())
+                if fng {
+                    Text("FNG").font(.caption2.weight(.heavy)).foregroundStyle(.white)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(AppColor.fng, in: RoundedRectangle(cornerRadius: 6))
+                }
+                Spacer()
+                OreTesto(ore: ore)
+            }
+            HStack {
+                Text("\(sett.filter { $0.tipo == .mattina && !$0.assenza }.count) mattine · \(sett.filter { $0.tipo == .pomeriggio && !$0.assenza }.count) pomeriggi")
+                Spacer()
+                if !fng && lavoraDomenica { Text("mancano \(oreMinuti(max(0, Calcoli.oreFNG - ore))) per l'FNG") }
+            }
+            .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// I memo del giorno scelto.
+    var memoDelGiorno: some View {
+        let miei = memo.filter { Calendar.current.isDate($0.giorno, inSameDayAs: selezionato) }
+        let altrui = stato.condivisi.flatMap { p in p.memo.filter { Calendar.current.isDate($0.giorno, inSameDayAs: selezionato) }.map { (p.nome, $0) } }
+        return Riquadro {
+            HStack {
+                Text("📝 " + formatoGiorno(selezionato, "EEEE d").capitalized).font(.headline)
+                Spacer()
+                if nome == nil {
+                    Button("✏️ Turno") { scelto = Giorno(id: selezionato) }.font(.subheadline.bold())
+                }
+            }
+            if miei.isEmpty && altrui.isEmpty {
+                Text("Nessun memo").font(.subheadline).foregroundStyle(.secondary)
+            }
+            ForEach(miei) { m in
+                HStack {
+                    Image(systemName: m.fatto ? "checkmark.circle.fill" : "circle").foregroundStyle(AppColor.ardesia)
+                    Text(m.testo).strikethrough(m.fatto)
+                    Spacer()
+                    if let a = m.avviso { Text(Turno.ora(a)).foregroundStyle(.secondary) }
+                }
+                .font(.subheadline)
+                .contentShape(Rectangle())
+                .onTapGesture { m.fatto.toggle() }
+            }
+            ForEach(altrui, id: \.1.id) { coppia in
+                HStack {
+                    Image(systemName: coppia.1.fatto ? "checkmark.circle.fill" : "circle").foregroundStyle(.secondary)
+                    Text(coppia.1.testo).strikethrough(coppia.1.fatto)
+                    Spacer()
+                    Text("da \(coppia.0)").font(.caption).foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+            }
+            Button("＋ Aggiungi memo") { nuovoMemo = Giorno(id: selezionato) }.font(.subheadline.bold())
+        }
+    }
+
+    func cella(_ g: Date, _ t: Turno?, ferie: Bool, memo: Bool) -> some View {
         let oggi = Calendar.current.isDateInToday(g)
+        let scelta = g == selezionato
         let fuori = !Calendar.current.isDate(g, equalTo: mese, toGranularity: .month)
-        return Button { if nome == nil { scelto = Giorno(id: g) } } label: {
+        // Un tocco sceglie il giorno: sotto compaiono la sua settimana e i suoi memo.
+        return Button { selezionato = g } label: {
             VStack(spacing: 1) {
                 Text("\(Calendar.current.component(.day, from: g))").font(.subheadline.bold())
                 if let t, t.assenza {
@@ -470,7 +582,13 @@ struct CalendarioView: View {
             .foregroundStyle(t == nil ? Color.primary : .white)
             .frame(maxWidth: .infinity, minHeight: 52)
             .background(t.map { $0.assenza ? AppColor.fng : $0.tipo.colore } ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 9))
-            .overlay(RoundedRectangle(cornerRadius: 9).stroke(.black, lineWidth: oggi ? 2 : 0))
+            .overlay(RoundedRectangle(cornerRadius: 9).stroke(scelta ? Color.black : AppColor.ardesia, lineWidth: scelta ? 2.5 : (oggi ? 1.5 : 0)))
+            .overlay(alignment: .topTrailing) {
+                if memo {
+                    Circle().fill(.red).frame(width: 7, height: 7)
+                        .overlay(Circle().stroke(.white, lineWidth: 1)).padding(3)
+                }
+            }
             .opacity(fuori ? 0.4 : 1)
         }
         .buttonStyle(.plain)
@@ -803,6 +921,7 @@ struct MemoView: View {
 struct NuovoMemo: View {
     @Environment(\.modelContext) var contesto
     @Environment(\.dismiss) var chiudi
+    var giornoIniziale: Date = .now
     @State private var testo = ""
     @State private var giorno = Date.now
     @State private var conAvviso = false
@@ -819,6 +938,7 @@ struct NuovoMemo: View {
                 }
             }
             .navigationTitle("Nuovo memo")
+            .onAppear { giorno = giornoIniziale }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Annulla") { chiudi() } }
