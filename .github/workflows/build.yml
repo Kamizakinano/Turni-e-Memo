@@ -14,12 +14,14 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    # I Mac "macos-15" di GitHub erano spesso tutti occupati: si usa macos-14 con Xcode 16 (serve per iOS 18).
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
       - name: Genera il progetto Xcode
         run: |
+          X=$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1); echo "Xcode: $X"; sudo xcode-select -s "$X"
           brew install xcodegen
           xcodegen generate
 
