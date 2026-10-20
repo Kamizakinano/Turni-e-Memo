@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import EventKit
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @EnvironmentObject var stato: Stato
@@ -430,7 +431,11 @@ struct CalendarioView: View {
         return Button { if nome == nil { scelto = Giorno(id: g) } } label: {
             VStack(spacing: 1) {
                 Text("\(Calendar.current.component(.day, from: g))").font(.subheadline.bold())
-                if let t {
+                if let t, t.assenza {
+                    Text("\(t.codice ?? "")\n\(oreMinuti(t.ore))")
+                        .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
+                        .lineLimit(2).minimumScaleFactor(0.6)
+                } else if let t {
                     Text("\(Turno.ora(t.inizio))\n\(Turno.ora(t.fine))")
                         .font(.system(size: 9, weight: .semibold)).multilineTextAlignment(.center)
                         .lineLimit(2).minimumScaleFactor(0.7)
@@ -440,7 +445,7 @@ struct CalendarioView: View {
             }
             .foregroundStyle(t == nil ? Color.primary : .white)
             .frame(maxWidth: .infinity, minHeight: 52)
-            .background(t?.tipo.colore ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 9))
+            .background(t.map { $0.assenza ? AppColor.fng : $0.tipo.colore } ?? AppColor.riposo, in: RoundedRectangle(cornerRadius: 9))
             .overlay(RoundedRectangle(cornerRadius: 9).stroke(.black, lineWidth: oggi ? 2 : 0))
             .opacity(fuori ? 0.4 : 1)
         }
@@ -624,6 +629,66 @@ struct SceltaTurno: View {
     }
 }
 
+struct ImportaSuperShift: View {
+    @Environment(\.modelContext) var contesto
+    @Environment(\.dismiss) var chiudi
+    @Query var manuali: [TurnoManuale]
+    var giorni: [GiornoImportato]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    let conta = Dictionary(grouping: giorni, by: \.codice).mapValues(\.count)
+                    ForEach(["MA", "PO", "RI", "MI", "FE", "PE"], id: \.self) { k in
+                        if let n = conta[k] { Riga(titolo: SuperShift.nome(k), valore: "\(n)") }
+                    }
+                } header: {
+                    Text("Trovati \(giorni.count) giorni · \(formatoGiorno(giorni.first!.giorno, "MMM yyyy")) – \(formatoGiorno(giorni.last!.giorno, "MMM yyyy"))")
+                }
+                Section("Giorni") {
+                    ForEach(giorni) { g in
+                        HStack {
+                            Text(g.codice).font(.caption.weight(.heavy)).foregroundStyle(.white)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(SuperShift.colore(g), in: RoundedRectangle(cornerRadius: 6))
+                            Text(formatoGiorno(g.giorno, "EEE d MMM") + (g.riposo ? " · Riposo" : " · \(Turno.ora(g.inizio))–\(Turno.ora(g.fine))"))
+                                .font(.subheadline)
+                            Spacer()
+                            if !g.riposo {
+                                VStack(alignment: .trailing, spacing: 0) {
+                                    Text(oreMinuti(g.ore)).font(.subheadline.bold())
+                                    if let p = g.pausa { Text("pausa \(p) min").font(.caption2).foregroundStyle(.secondary) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Importa da SuperShift")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Annulla") { chiudi() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Importa \(giorni.count)") { importa() } }
+            }
+        }
+    }
+
+    func importa() {
+        let date = Set(giorni.map { Calendar.current.startOfDay(for: $0.giorno) })
+        for m in manuali where date.contains(Calendar.current.startOfDay(for: m.giorno)) { contesto.delete(m) }
+        for g in giorni {
+            let m = TurnoManuale(giorno: g.giorno, riposo: g.riposo, inizio: g.inizio, fine: g.fine)
+            m.pausa = g.pausa ?? Turno.pausaMinima
+            m.codice = g.codice
+            m.orePagate = g.riposo ? -1 : g.ore
+            contesto.insert(m)
+            if g.fine < .now { Conferme.conferma(g.giorno) }
+        }
+        chiudi()
+    }
+}
+
 // MARK: - Memo
 
 struct MemoView: View {
@@ -789,6 +854,9 @@ struct AltroView: View {
     @AppStorage("condividiTurni") var condividiTurni = false
     @AppStorage("condividiMemo") var condividiMemo = false
     @State private var errore: String?
+    @State private var scegliPDF = false
+    @State private var importati: [GiornoImportato] = []
+    @State private var anteprima = false
     @AppStorage("mattinaInizio") var mI = 360
     @AppStorage("mattinaFine") var mF = 840
     @AppStorage("pomeriggioInizio") var pI = 840
@@ -848,6 +916,14 @@ struct AltroView: View {
                 }
 
                 Section {
+                    Button("Importa PDF da SuperShift") { scegliPDF = true }
+                } header: {
+                    Text("Turni passati")
+                } footer: {
+                    Text("In SuperShift esporta gli orari in PDF e salvalo in File. Gli orari importati (con pause e ore pagate) sostituiscono quelli di Dayforce in quei giorni.")
+                }
+
+                Section {
                     orario("Mattina inizio", $mI)
                     orario("Mattina fine", $mF)
                     orario("Pomeriggio inizio", $pI)
@@ -871,6 +947,14 @@ struct AltroView: View {
                 }
             }
             .navigationTitle("Altro")
+            .fileImporter(isPresented: $scegliPDF, allowedContentTypes: [.pdf]) { esito in
+                guard case .success(let url) = esito else { return }
+                let accesso = url.startAccessingSecurityScopedResource()
+                defer { if accesso { url.stopAccessingSecurityScopedResource() } }
+                importati = SuperShift.leggi(SuperShift.testo(pdf: url) ?? "")
+                if importati.isEmpty { errore = "Nel PDF non ho trovato orari di SuperShift." } else { anteprima = true }
+            }
+            .sheet(isPresented: $anteprima) { ImportaSuperShift(giorni: importati) }
         }
     }
 

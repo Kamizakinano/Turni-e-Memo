@@ -60,6 +60,9 @@ final class TurnoManuale {
     var inizio: Date = Date.now
     var fine: Date = Date.now
     var pausa: Int = 11
+    /// Dall'importazione di SuperShift: codice (MA, PO, RI, MI, FE, PE) e ore pagate (-1 = da calcolare).
+    var codice: String = ""
+    var orePagate: Double = -1
 
     init(giorno: Date, riposo: Bool, inizio: Date, fine: Date) {
         self.giorno = Calendar.current.startOfDay(for: giorno)
@@ -69,7 +72,8 @@ final class TurnoManuale {
     }
 
     var turno: Turno {
-        Turno(id: "m-\(Int(giorno.timeIntervalSince1970))", inizio: inizio, fine: fine, manuale: true, pausaMin: pausa)
+        Turno(id: "m-\(Int(giorno.timeIntervalSince1970))", inizio: inizio, fine: fine, manuale: true, pausaMin: pausa,
+              orePagate: orePagate >= 0 ? orePagate : nil, codice: codice.isEmpty ? nil : codice)
     }
 }
 

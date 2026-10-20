@@ -23,6 +23,10 @@ struct Turno: Codable, Hashable, Identifiable {
     var manuale: Bool = false
     /// Pausa non pagata in minuti (se manca vale quella minima).
     var pausaMin: Int? = nil
+    /// Ore pagate già calcolate (es. importate da SuperShift): se ci sono valgono loro.
+    var orePagate: Double? = nil
+    /// Codice di SuperShift (MA, PO, MI, FE, PE), se il giorno è stato importato.
+    var codice: String? = nil
 
     /// La pausa non pagata è di almeno 11 minuti per turno, anche se Dayforce ne segna 10.
     static let pausaMinima = 11
@@ -30,7 +34,10 @@ struct Turno: Codable, Hashable, Identifiable {
 
     var tipo: TipoTurno { .da(inizio: inizio) }
     /// Ore pagate: durata del turno meno la pausa.
-    var ore: Double { max(0, fine.timeIntervalSince(inizio) - Double(pausa * 60)) / 3600 }
+    var ore: Double { orePagate ?? max(0, fine.timeIntervalSince(inizio) - Double(pausa * 60)) / 3600 }
+
+    /// Festività o permesso: ore pagate ma non è un turno vero.
+    var assenza: Bool { codice == "FE" || codice == "PE" }
 
     var orario: String { "\(Turno.ora(inizio)) – \(Turno.ora(fine))" }
 

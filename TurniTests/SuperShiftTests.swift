@@ -1,0 +1,89 @@
+import XCTest
+@testable import Turni
+
+final class SuperShiftTests: XCTestCase {
+    let c = Calendar.current
+
+    func data(_ a: Int, _ m: Int, _ g: Int, _ h: Int = 0, _ min: Int = 0) -> Date {
+        c.date(from: DateComponents(year: a, month: m, day: g, hour: h, minute: min))!
+    }
+
+    // Come esce dal PDF con le colonne in fila.
+    let ordinato = """
+                novembre 2025
+                Giorno                      Ora               Pausa                        Titolo                  Luogo               Note
+                         1       Sab   MA   05 20 - 14 29     11 00, 15 min   8 h 54 min   Mattina
+                                            Tutto il giorno                                Ognissanti
+                                            05 00 - 14 00                                  Commesso Specializzato
+                     4           Mar   RI   00 00 - 00 00                     24 h         Riposo
+                     6           Gio   MA   09 27 - 14 08                     4 h 41 min   Mattina
+                                            05 30 - 12 00                                  Commesso Specializzato
+                     8           Sab   PO   13 00 - 21 35     15 00, 22 min   8 h 13 min   Pomeriggio
+                                            12 00 - 13 00                                  Appuntamento
+                dicembre 2025
+                    25           Gio   FE   00 00 - 08 00                     8h           Festivita Casa
+                    30           Mar   MA   06 00 - 14 22     11 00, 22 min   8h           Mattina
+    """
+
+    // Come esce con i pezzi in ordine diverso ("05", ":", "20", pausa dopo le ore).
+    let sparso = """
+    novembre 2025
+    Giorno Titolo
+    1 Sab MA 05
+    :
+    20 - 14
+    :
+    29 8 h 54 min Mattina
+    11
+    :
+    00, 15 min
+    Tutto il giorno Ognissanti
+    05
+    :
+    00 - 14
+    :
+    00 Commesso Specializzato
+    2 Dom MA 06
+    :
+    00 - 14
+    :
+    17 8 h 4 min Mattina
+    11
+    :
+    00, 13 min
+    """
+
+    func testLeggeIlPDFOrdinato() {
+        let g = SuperShift.leggi(ordinato)
+        XCTAssertEqual(g.map(\.codice), ["MA", "RI", "MA", "PO", "FE", "MA"])
+        XCTAssertEqual(g[0].giorno, data(2025, 11, 1))
+        XCTAssertEqual(g[0].inizio, data(2025, 11, 1, 5, 20))
+        XCTAssertEqual(g[0].fine, data(2025, 11, 1, 14, 29))
+        XCTAssertEqual(g[0].pausa, 15)
+        XCTAssertEqual(g[0].ore, 8 + 54.0 / 60, accuracy: 0.0001)
+        XCTAssertTrue(g[1].riposo)
+        XCTAssertNil(g[2].pausa)
+        XCTAssertEqual(g[2].ore, 4 + 41.0 / 60, accuracy: 0.0001)
+        XCTAssertEqual(g[3].inizio, data(2025, 11, 8, 13, 0))
+        XCTAssertEqual(g[4].giorno, data(2025, 12, 25))
+        XCTAssertEqual(g[4].ore, 8)
+        XCTAssertEqual(g[5].ore, 8)
+    }
+
+    func testLeggeIlPDFSparso() {
+        let g = SuperShift.leggi(sparso)
+        XCTAssertEqual(g.count, 2)
+        XCTAssertEqual(g[0].inizio, data(2025, 11, 1, 5, 20))
+        XCTAssertEqual(g[0].fine, data(2025, 11, 1, 14, 29))
+        XCTAssertEqual(g[0].pausa, 15)
+        XCTAssertEqual(g[1].fine, data(2025, 11, 2, 14, 17))
+        XCTAssertEqual(g[1].ore, 8 + 4.0 / 60, accuracy: 0.0001)
+    }
+
+    func testOrePagateImportateValgonoSulCalcolo() {
+        let t = Turno(id: "x", inizio: data(2025, 11, 1, 5, 20), fine: data(2025, 11, 1, 14, 29), pausaMin: 15,
+                      orePagate: 8 + 54.0 / 60, codice: "MA")
+        XCTAssertEqual(oreMinuti(t.ore), "8 h 54 min")
+        XCTAssertTrue(Turno(id: "f", inizio: .now, fine: .now, codice: "FE").assenza)
+    }
+}
