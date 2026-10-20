@@ -22,6 +22,10 @@ final class SuperShiftTests: XCTestCase {
                                             12 00 - 13 00                                  Vale Fiera
                 dicembre 2025
                     25           Gio   FE   00 00 - 08 00                     8h           Festivita Casa
+                                            Tutto il giorno                                Natale di Gesù
+                    27           Sab   RI   00 00 - 00 00                     24 h         Riposo
+                                            Tutto il giorno                                Istanbul
+                                            09 00 - 15 00                     6h           FERIE
                     30           Mar   MA   06 00 - 14 22     11 00, 22 min   8h           Mattina
     """
 
@@ -55,7 +59,7 @@ final class SuperShiftTests: XCTestCase {
 
     func testLeggeIlPDFOrdinato() {
         let g = SuperShift.leggi(ordinato)
-        XCTAssertEqual(g.map(\.codice), ["MA", "RI", "MA", "PO", "FE", "MA"])
+        XCTAssertEqual(g.map(\.codice), ["MA", "RI", "MA", "PO", "FE", "RI", "MA"])
         XCTAssertEqual(g[0].giorno, data(2025, 11, 1))
         XCTAssertEqual(g[0].inizio, data(2025, 11, 1, 5, 20))
         XCTAssertEqual(g[0].fine, data(2025, 11, 1, 14, 29))
@@ -67,7 +71,7 @@ final class SuperShiftTests: XCTestCase {
         XCTAssertEqual(g[3].inizio, data(2025, 11, 8, 13, 0))
         XCTAssertEqual(g[4].giorno, data(2025, 12, 25))
         XCTAssertEqual(g[4].ore, 8)
-        XCTAssertEqual(g[5].ore, 8)
+        XCTAssertEqual(g[6].ore, 8)
     }
 
     func testNoteDiventanoMemoSenzaIlTurnoDiDayforce() {
@@ -75,6 +79,11 @@ final class SuperShiftTests: XCTestCase {
         XCTAssertEqual(g[0].memo.map(\.testo), [])                       // solo "Commesso Specializzato"
         XCTAssertEqual(g[3].memo.map(\.testo), ["Vale Fiera"])
         XCTAssertEqual(g[3].memo.first?.ora, data(2025, 11, 8, 12, 0))
+        // Le festività non diventano memo; le note di tutto il giorno e quelle dopo le ore ("6h FERIE") sì.
+        XCTAssertEqual(g[4].memo.map(\.testo), [])
+        XCTAssertEqual(Set(g[5].memo.map(\.testo)), ["FERIE", "Istanbul"])
+        XCTAssertTrue(g[5].ferie)
+        XCTAssertNil(g[5].memo.first { $0.testo == "Istanbul" }?.ora)
     }
 
     func testLeggeIlPDFSparso() {

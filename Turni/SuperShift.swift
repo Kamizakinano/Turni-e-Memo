@@ -20,7 +20,7 @@ struct GiornoImportato: Hashable, Identifiable {
 }
 
 struct MemoImportato: Hashable {
-    var ora: Date
+    var ora: Date?          // nil = tutto il giorno
     var testo: String
 }
 
@@ -42,6 +42,19 @@ enum SuperShift {
         }
     }
 
+    /// Festività e cambi dell'ora: in SuperShift sono note di tutto il giorno, ma non servono come memo.
+    static let festivita: Set<String> = ["capodanno", "epifania", "pasqua", "lunedì di pasqua", "liberazione dal nazifascismo",
+        "festa della liberazione", "festa del lavoro", "festa della repubblica", "assunzione di maria", "ferragosto", "ognissanti",
+        "immacolata concezione", "natale di gesù", "natale", "santo stefano", "ora legale", "ora solare"]
+
+    /// Il titolo di una nota: il primo pezzo di testo della riga, saltando le ore (es. "6h") e gli spazi delle colonne.
+    static func titoloNota(_ resto: String) -> String {
+        var riga = resto.split(separator: "\n", omittingEmptySubsequences: false).first.map(String.init) ?? ""
+        riga = riga.replacingOccurrences(of: "^\\s*\\d+\\s*h(\\s*\\d+\\s*min)?(\\s+|$)", with: "", options: .regularExpression)
+        return riga.components(separatedBy: "   ").map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { !$0.isEmpty && $0.range(of: "^\\d+\\s*h(\\s*\\d+\\s*min)?$", options: .regularExpression) == nil } ?? ""
+    }
+
     static func testo(pdf url: URL) -> String? {
         PDFDocument(url: url)?.string
     }
@@ -53,6 +66,7 @@ enum SuperShift {
         guard let reH = try? NSRegularExpression(pattern: intestazioni),
               let reOrario = try? NSRegularExpression(pattern: "(\\d{2})\\s*:?\\s*(\\d{2})\\s*-\\s*(\\d{2})\\s*:?\\s*(\\d{2})"),
               let reOre = try? NSRegularExpression(pattern: "(\\d+)\\s*h(?:\\s*(\\d+)\\s*min)?"),
+              let reTuttoIlGiorno = try? NSRegularExpression(pattern: "Tutto il giorno[ \\t]+([^\\n]+)"),
               let rePausa = try? NSRegularExpression(pattern: "(\\d{2})\\s*:?\\s*(\\d{2}),\\s*(\\d+)\\s*min") else { return [] }
         let ns = testo as NSString
         let tutte = reH.matches(in: testo, range: NSRange(location: 0, length: ns.length))
@@ -100,17 +114,15 @@ enum SuperShift {
             var note: [MemoImportato] = []
             for e in reOrario.matches(in: testo, range: blocco).dropFirst() {
                 let resto = ns.substring(with: NSRange(location: e.range.upperBound, length: blocco.upperBound - e.range.upperBound))
-                let riga = resto.split(separator: "\n", omittingEmptySubsequences: false).first.map(String.init) ?? ""
-                var titolo = riga.components(separatedBy: "   ").map { $0.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty } ?? ""
-                if titolo.range(of: "^\\d+\\s*h(\\s*\\d+\\s*min)?$", options: .regularExpression) != nil { titolo = "" }
+                let titolo = titoloNota(resto)
                 guard !titolo.isEmpty else { continue }
                 let ora = c.date(byAdding: .minute, value: (n(e, 1) ?? 0) * 60 + (n(e, 2) ?? 0), to: data)!
-                var fineNota = c.date(byAdding: .minute, value: (n(e, 3) ?? 0) * 60 + (n(e, 4) ?? 0), to: data)!
-                if fineNota <= ora { fineNota = c.date(byAdding: .day, value: 1, to: fineNota)! }
-                // Un evento lungo che si sovrappone al turno è il turno previsto di Dayforce, non una nota.
-                let lungo = fineNota.timeIntervalSince(ora) >= 3 * 3600
-                if codice != "RI" && lungo && ora < fine && fineNota > inizio && titolo.uppercased() != "FERIE" { continue }
                 note.append(MemoImportato(ora: ora, testo: titolo))
+            }
+            // Le note di "tutto il giorno" (es. un viaggio), tranne festività e cambi dell'ora.
+            for e in reTuttoIlGiorno.matches(in: testo, range: blocco) {
+                let titolo = titoloNota(ns.substring(with: e.range(at: 1)))
+                if !titolo.isEmpty && !festivita.contains(titolo.lowercased()) { note.append(MemoImportato(ora: nil, testo: titolo)) }
             }
             risultato.append(GiornoImportato(giorno: data, codice: codice, inizio: inizio, fine: fine,
                                              pausa: n(pausa, 3), ore: codice == "RI" ? 0 : orePagate, memo: note))
@@ -121,7 +133,7 @@ enum SuperShift {
         // Il turno previsto di Dayforce si ripete quasi ogni giorno (es. "Commesso Specializzato …"): non è un memo.
         func primeParole(_ t: String) -> String { t.split(separator: " ").prefix(2).joined(separator: " ").lowercased() }
         let quante = Dictionary(grouping: risultato.flatMap(\.memo), by: { primeParole($0.testo) }).mapValues(\.count)
-        let soglia = max(10, risultato.count / 6)
+        let soglia = max(2, risultato.count / 6)
         for i in risultato.indices {
             risultato[i].memo = risultato[i].memo.filter { (quante[primeParole($0.testo)] ?? 0) < soglia || $0.testo.uppercased() == "FERIE" }
         }

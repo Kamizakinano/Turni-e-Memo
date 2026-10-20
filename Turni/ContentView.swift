@@ -849,8 +849,8 @@ struct ImportaSuperShift: View {
                 for n in g.memo where n.testo.uppercased() != "FERIE" {
                     let doppio = memoEsistenti.contains { $0.testo == n.testo && Calendar.current.isDate($0.giorno, inSameDayAs: g.giorno) }
                     if !doppio {
-                        let nuovo = Memo(testo: n.testo, giorno: g.giorno, avviso: n.ora > .now ? n.ora : nil)
-                        nuovo.fatto = n.ora < Calendar.current.startOfDay(for: .now)
+                        let nuovo = Memo(testo: n.testo, giorno: g.giorno, avviso: n.ora.flatMap { $0 > .now ? $0 : nil })
+                        nuovo.fatto = g.giorno < Calendar.current.startOfDay(for: .now)
                         contesto.insert(nuovo)
                     }
                 }
