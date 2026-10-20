@@ -415,16 +415,17 @@ struct CalendarioView: View {
                 SceltaPersona(chi: $chi)
                 Text(nome.map { "Turni di \($0) (solo da vedere)" } ?? "Tocca un giorno per cambiare turno").foregroundStyle(.secondary)
                 Riquadro {
-                    // Griglia fissa (non "pigra"): le caselle si disegnano una volta sola, non durante lo scorrimento.
-                    Grid(horizontalSpacing: 5, verticalSpacing: 5) {
-                        GridRow {
+                    // Righe semplici (non "pigre"): le caselle si disegnano una volta sola, non durante lo scorrimento.
+                    VStack(spacing: 5) {
+                        HStack(spacing: 5) {
                             Color.clear.frame(width: 14, height: 1)
                             ForEach(["L", "M", "M", "G", "V", "S", "D"].indices, id: \.self) { i in
                                 Text(["L", "M", "M", "G", "V", "S", "D"][i]).font(.caption).foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity)
                             }
                         }
                         ForEach(settimane, id: \.self) { lunedi in
-                            GridRow {
+                            HStack(spacing: 5) {
                                 Text("\(Calcoli.kw(lunedi))").font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary)
                                     .frame(width: 14)
                                 ForEach((0..<7).map { Calendar.current.date(byAdding: .day, value: $0, to: lunedi)! }, id: \.self) { g in
