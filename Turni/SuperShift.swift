@@ -12,8 +12,16 @@ struct GiornoImportato: Hashable, Identifiable {
     var fine: Date
     var pausa: Int?
     var ore: Double
+    /// Le note del giorno (le righe grigie del PDF), che diventano memo.
+    var memo: [MemoImportato] = []
     var id: Date { giorno }
+    var ferie: Bool { memo.contains { $0.testo.uppercased() == "FERIE" } }
     var riposo: Bool { codice == "RI" }
+}
+
+struct MemoImportato: Hashable {
+    var ora: Date
+    var testo: String
 }
 
 enum SuperShift {
@@ -88,11 +96,35 @@ enum SuperShift {
             var fine = c.date(byAdding: .minute, value: (n(orario, 3) ?? 0) * 60 + (n(orario, 4) ?? 0), to: data)!
             if fine <= inizio && codice != "RI" { fine = c.date(byAdding: .day, value: 1, to: fine)! }
             let orePagate = Double(n(ore, 1) ?? 0) + Double(n(ore, 2) ?? 0) / 60
+            // Le altre righe con un orario sono eventi: il turno previsto di Dayforce e le note personali.
+            var note: [MemoImportato] = []
+            for e in reOrario.matches(in: testo, range: blocco).dropFirst() {
+                let resto = ns.substring(with: NSRange(location: e.range.upperBound, length: blocco.upperBound - e.range.upperBound))
+                let riga = resto.split(separator: "\n", omittingEmptySubsequences: false).first.map(String.init) ?? ""
+                var titolo = riga.components(separatedBy: "   ").map { $0.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty } ?? ""
+                if titolo.range(of: "^\\d+\\s*h(\\s*\\d+\\s*min)?$", options: .regularExpression) != nil { titolo = "" }
+                guard !titolo.isEmpty else { continue }
+                let ora = c.date(byAdding: .minute, value: (n(e, 1) ?? 0) * 60 + (n(e, 2) ?? 0), to: data)!
+                var fineNota = c.date(byAdding: .minute, value: (n(e, 3) ?? 0) * 60 + (n(e, 4) ?? 0), to: data)!
+                if fineNota <= ora { fineNota = c.date(byAdding: .day, value: 1, to: fineNota)! }
+                // Un evento lungo che si sovrappone al turno è il turno previsto di Dayforce, non una nota.
+                let lungo = fineNota.timeIntervalSince(ora) >= 3 * 3600
+                if codice != "RI" && lungo && ora < fine && fineNota > inizio && titolo.uppercased() != "FERIE" { continue }
+                note.append(MemoImportato(ora: ora, testo: titolo))
+            }
             risultato.append(GiornoImportato(giorno: data, codice: codice, inizio: inizio, fine: fine,
-                                             pausa: n(pausa, 3), ore: codice == "RI" ? 0 : orePagate))
+                                             pausa: n(pausa, 3), ore: codice == "RI" ? 0 : orePagate, memo: note))
         }
         // Un giorno compare una volta sola.
         var visti = Set<Date>()
-        return risultato.filter { visti.insert($0.giorno).inserted }
+        risultato = risultato.filter { visti.insert($0.giorno).inserted }
+        // Il turno previsto di Dayforce si ripete quasi ogni giorno (es. "Commesso Specializzato …"): non è un memo.
+        func primeParole(_ t: String) -> String { t.split(separator: " ").prefix(2).joined(separator: " ").lowercased() }
+        let quante = Dictionary(grouping: risultato.flatMap(\.memo), by: { primeParole($0.testo) }).mapValues(\.count)
+        let soglia = max(10, risultato.count / 6)
+        for i in risultato.indices {
+            risultato[i].memo = risultato[i].memo.filter { (quante[primeParole($0.testo)] ?? 0) < soglia || $0.testo.uppercased() == "FERIE" }
+        }
+        return risultato
     }
 }

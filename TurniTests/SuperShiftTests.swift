@@ -19,7 +19,7 @@ final class SuperShiftTests: XCTestCase {
                      6           Gio   MA   09 27 - 14 08                     4 h 41 min   Mattina
                                             05 30 - 12 00                                  Commesso Specializzato
                      8           Sab   PO   13 00 - 21 35     15 00, 22 min   8 h 13 min   Pomeriggio
-                                            12 00 - 13 00                                  Appuntamento
+                                            12 00 - 13 00                                  Vale Fiera
                 dicembre 2025
                     25           Gio   FE   00 00 - 08 00                     8h           Festivita Casa
                     30           Mar   MA   06 00 - 14 22     11 00, 22 min   8h           Mattina
@@ -68,6 +68,13 @@ final class SuperShiftTests: XCTestCase {
         XCTAssertEqual(g[4].giorno, data(2025, 12, 25))
         XCTAssertEqual(g[4].ore, 8)
         XCTAssertEqual(g[5].ore, 8)
+    }
+
+    func testNoteDiventanoMemoSenzaIlTurnoDiDayforce() {
+        let g = SuperShift.leggi(ordinato)
+        XCTAssertEqual(g[0].memo.map(\.testo), [])                       // solo "Commesso Specializzato"
+        XCTAssertEqual(g[3].memo.map(\.testo), ["Vale Fiera"])
+        XCTAssertEqual(g[3].memo.first?.ora, data(2025, 11, 8, 12, 0))
     }
 
     func testLeggeIlPDFSparso() {

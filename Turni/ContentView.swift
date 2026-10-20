@@ -671,6 +671,8 @@ struct ImportaSuperShift: View {
     @Environment(\.modelContext) var contesto
     @Environment(\.dismiss) var chiudi
     @Query var manuali: [TurnoManuale]
+    @Query var memoEsistenti: [Memo]
+    @State private var conMemo = true
     var giorni: [GiornoImportato]
 
     var body: some View {
@@ -681,6 +683,7 @@ struct ImportaSuperShift: View {
                     ForEach(["MA", "PO", "RI", "MI", "FE", "PE"], id: \.self) { k in
                         if let n = conta[k] { Riga(titolo: SuperShift.nome(k), valore: "\(n)") }
                     }
+                    Toggle("Importa anche i \(giorni.flatMap(\.memo).count) memo", isOn: $conMemo)
                 } header: {
                     Text("Trovati \(giorni.count) giorni · \(formatoGiorno(giorni.first!.giorno, "MMM yyyy")) – \(formatoGiorno(giorni.last!.giorno, "MMM yyyy"))")
                 }
@@ -721,7 +724,19 @@ struct ImportaSuperShift: View {
             m.codice = g.codice
             m.orePagate = g.riposo ? -1 : g.ore
             contesto.insert(m)
+            if g.ferie && g.riposo { m.codice = "FER" }
             if g.fine < .now { Conferme.conferma(g.giorno) }
+            // Le note diventano memo (senza doppioni se importi di nuovo lo stesso PDF).
+            if conMemo {
+                for n in g.memo where n.testo.uppercased() != "FERIE" {
+                    let doppio = memoEsistenti.contains { $0.testo == n.testo && Calendar.current.isDate($0.giorno, inSameDayAs: g.giorno) }
+                    if !doppio {
+                        let nuovo = Memo(testo: n.testo, giorno: g.giorno, avviso: n.ora > .now ? n.ora : nil)
+                        nuovo.fatto = n.ora < Calendar.current.startOfDay(for: .now)
+                        contesto.insert(nuovo)
+                    }
+                }
+            }
         }
         Storico.aggiungi("Importazione", "SuperShift: \(giorni.count) giorni importati",
                          "\(formatoGiorno(giorni.first!.giorno, "d MMM yyyy")) – \(formatoGiorno(giorni.last!.giorno, "d MMM yyyy"))")
