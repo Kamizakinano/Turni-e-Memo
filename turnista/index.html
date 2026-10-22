@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Turnista">
+<meta name="theme-color" content="#f4f6f8">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icona.png">
+<title>Turnista</title>
+<style>
+  :root { --blu: #1f6feb; --M: #FFB547; --I: #8e6bd8; --P: #5D7584; --R: #cfd6dc; --F: #2e9d5b; --rosso: #d9534f;
+          --sfondo: #f4f6f8; --carta: #fff; --testo: #1b1f24; --grigio: #6b7785; --linea: #e6eaee; --tasto: #eef1f3; --avviso: #fff4e5; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sfondo: #111418; --carta: #1b2027; --testo: #e9edf1; --grigio: #9aa6b2; --linea: #2b323b; --tasto: #2b323b; --avviso: #3a2c14; --R: #3a424c; color-scheme: dark; } }
+  :root[data-theme="dark"] { --sfondo: #111418; --carta: #1b2027; --testo: #e9edf1; --grigio: #9aa6b2; --linea: #2b323b; --tasto: #2b323b; --avviso: #3a2c14; --R: #3a424c; color-scheme: dark; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--sfondo); color: var(--testo); font: 15px -apple-system, system-ui, Helvetica, Arial, sans-serif; }
+  main { max-width: 1100px; margin: auto; padding-block: 12px 96px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 28px; margin: 4px 0 8px; }
+  h2 { font-size: 17px; margin: 0 0 8px; }
+  .carta { background: var(--carta); border-radius: 16px; padding: 12px 14px; margin: 10px 0; border: 1px solid var(--linea); }
+  .riga { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--linea); }
+  .riga:last-child { border-bottom: 0; }
+  .grigio { color: var(--grigio); font-size: 13px; }
+  button { font: inherit; border: 0; border-radius: 12px; padding: 9px 14px; background: var(--tasto); color: var(--testo); font-weight: 600; cursor: pointer; }
+  button.blu { background: var(--blu); color: #fff; }
+  button.rosso { background: #fbe9e9; color: var(--rosso); }
+  button.piccolo { padding: 5px 10px; font-size: 13px; }
+  input, select { font: inherit; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 10px; background: var(--carta); color: var(--testo); max-width: 100%; }
+  input[type=number] { width: 64px; }
+  .barra { height: 8px; background: var(--linea); border-radius: 4px; overflow: hidden; flex: 1; }
+  .barra div { height: 100%; border-radius: 4px; }
+  .tab { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--carta); border-top: 1px solid var(--linea);
+         padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); z-index: 5; }
+  .tab button { flex: 1; background: none; color: var(--grigio); font-size: 12px; padding: 4px; }
+  .tab button b { display: block; font-size: 20px; }
+  .tab button.on { color: var(--blu); }
+  .griglia { overflow-x: auto; }
+  table { border-collapse: separate; border-spacing: 3px; width: 100%; font-size: 12px; }
+  th { color: var(--grigio); font-weight: 700; padding: 2px; }
+  td.nome { white-space: nowrap; font-weight: 600; padding-right: 6px; position: sticky; left: 0; background: var(--carta); }
+  td.cella { text-align: center; border-radius: 7px; padding: 4px 2px; min-width: 52px; cursor: pointer; line-height: 1.15; }
+  td.cella small { display: block; font-size: 10px; opacity: .9; }
+  .M { background: var(--M); color: #fff; } .I { background: var(--I); color: #fff; } .P { background: var(--P); color: #fff; }
+  .R { background: var(--R); color: var(--testo); } .F { background: var(--F); color: #fff; }
+  .corto { outline: 2px dashed var(--rosso); outline-offset: -2px; }
+  .etichetta { display: inline-block; border-radius: 6px; padding: 1px 6px; font-size: 11px; font-weight: 700; background: var(--tasto); margin: 1px; }
+  .resp { background: var(--blu); color: #fff; }
+  .ok { color: var(--F); font-weight: 700; } .no { color: var(--rosso); font-weight: 700; }
+  .linea { position: relative; height: 16px; background: var(--tasto); border-radius: 4px; flex: 1; }
+  .linea i { position: absolute; top: 2px; height: 12px; border-radius: 3px; }
+  dialog { background: var(--carta); color: var(--testo); border: 0; border-radius: 18px; padding: 16px; width: min(420px, 94vw); }
+  dialog::backdrop { background: #0006; }
+  .campo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 8px 0; }
+  .avviso { background: var(--avviso); }
+</style>
+</head>
+<body>
+<main id="pagina"></main>
+<nav class="tab">
+  <button data-tab="settimana"><b>📋</b>Settimana</button>
+  <button data-tab="dipendenti"><b>👥</b>Dipendenti</button>
+  <button data-tab="regole"><b>⚙️</b>Regole</button>
+</nav>
+<dialog id="finestra"></dialog>
+<dialog id="domanda"><p id="dTesto"></p><textarea id="dCopia" hidden readonly rows="8" style="width:100%"></textarea>
+  <p style="display:flex;gap:8px;justify-content:flex-end"><button id="dNo">Annulla</button><button class="blu" id="dSi">Sì</button></p></dialog>
+
+<script type="module">
+import { GIORNI, FASCE, regoleBase, genera, verifica, suggerimenti, oreGiorno, oreSettimana, orePagate,
+         coperture, bilancio, ora } from './motore.js';
+
+// Domande e avvisi dentro la pagina (le finestre del browser come confirm() qui non funzionano).
+function chiedi(testo, { si = 'Sì', no = 'Annulla', copia = null, incolla = false } = {}) {
+  const d = document.getElementById('domanda');
+  d.querySelector('#dTesto').textContent = testo;
+  const ta = d.querySelector('#dCopia'); ta.hidden = copia == null && !incolla; ta.value = copia ?? ''; ta.readOnly = !incolla;
+  d.querySelector('#dSi').textContent = si;
+  d.querySelector('#dNo').hidden = !no; d.querySelector('#dNo').textContent = no || '';
+  d.showModal();
+  return new Promise(ok => {
+    d.querySelector('#dSi').onclick = async () => {
+      if (copia != null) { try { await navigator.clipboard.writeText(copia); } catch { ta.select(); return; } }
+      d.close(); ok(incolla ? ta.value : true);
+    };
+    d.querySelector('#dNo').onclick = () => { d.close(); ok(false); };
+  });
+}
+const avvisa = testo => chiedi(testo, { si: 'OK', no: '' });
+
+// ---------- Dati: restano solo in questo browser (con "Salva copia" per il backup) ----------
+const CHIAVE = 'turnista';
+let dati;
+try { dati = JSON.parse(localStorage.getItem(CHIAVE)) ?? null; } catch { dati = null; }
+dati ??= { dipendenti: [], regole: regoleBase(), richieste: {}, settimane: {} };
+dati.regole = { ...regoleBase(), ...dati.regole };
+const salva = () => { try { localStorage.setItem(CHIAVE, JSON.stringify(dati)); } catch {} };
+
+let tab = 'settimana';
+let lunedi = lunediDi(new Date());
+let giornoAperto = null;
+
+function lunediDi(d) { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
+const chiave = d => d.toISOString().slice(0, 10);
+const piu = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const data = (d, n) => piu(d, n).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+const kw = d => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const g = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - g); return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const hm = h => { const m = Math.round(h * 60); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}`; };
+const opzioniOre = (sel, da = 300, a = 1290) => { let s = ''; for (let m = da; m <= a; m += 30) s += `<option value="${m}" ${m === sel ? 'selected' : ''}>${ora(m)}</option>`; return s; };
+
+const pianoSettimana = () => dati.settimane[chiave(lunedi)];
+const richiesteSettimana = () => dati.richieste[chiave(lunedi)] ??= [];
+const nomeDi = id => dati.dipendenti.find(d => d.id === id)?.nome ?? '?';
+
+// ---------- Settimana ----------
+function vistaSettimana() {
+  const piano = pianoSettimana();
+  const r = dati.regole;
+  let h = `<div style="display:flex;justify-content:space-between;align-items:center">
+    <h1>Sett. ${kw(lunedi)}</h1>
+    <div><button class="piccolo" data-az="prec">‹</button> <button class="piccolo" data-az="succ">›</button></div></div>
+    <div class="grigio">${data(lunedi, 0)} – ${data(lunedi, 6)} · M ${ora(r.fasce.M.inizio)}–${ora(r.fasce.M.fine)} · I ${ora(r.fasce.I.inizio)}–${ora(r.fasce.I.fine)} · P ${ora(r.fasce.P.inizio)}–${ora(r.fasce.P.fine)}</div>
+    <p><button class="blu" data-az="genera">⚡ ${piano ? 'Rigenera' : 'Genera'} la settimana</button></p>`;
+  if (!dati.dipendenti.length) return h + `<div class="carta avviso">Prima inserisci i dipendenti nella scheda 👥 Dipendenti.</div>`;
+  if (!piano) return h + `<div class="carta grigio">Tocca “Genera” per creare i turni di questa settimana.</div>`;
+
+  const v = verifica(piano, dati.dipendenti, r, richiesteSettimana(), dati.settimane[chiave(piu(lunedi, -7))]);
+  h += `<div class="carta"><h2>Controlli</h2>
+    ${v.errori.length ? v.errori.map(e => `<div class="riga"><span>${esc(e)}</span><span class="no">✖</span></div>`).join('')
+      : `<div class="riga"><span>Responsabili, apertura, cambio turno, chiusura, 11 h di stacco, max ${r.maxGiorni} giorni, richieste</span><span class="ok">✔</span></div>`}
+    <div class="riga"><span>Straordinario totale</span><b>${hm(v.straordinario)}</b></div></div>`;
+
+  // Monte ore per giorno
+  h += `<div class="carta"><h2>Ore per giorno</h2>`;
+  for (let g = 0; g < 7; g++) {
+    const o = oreGiorno(piano[g], r), max = r.monteOre[g];
+    const col = o > max + 0.01 ? 'var(--rosso)' : o > max * 0.98 ? 'var(--M)' : 'var(--F)';
+    h += `<div class="riga" data-giorno="${g}" style="cursor:pointer"><span style="width:62px">${GIORNI[g]} ${piu(lunedi, g).getDate()}</span>
+      <div class="barra"><div style="width:${Math.min(100, o / max * 100)}%;background:${col}"></div></div>
+      <b style="width:96px;text-align:right;${o > max + 0.01 ? 'color:var(--rosso)' : ''}">${Math.round(o * 10) / 10} / ${max} h</b></div>`;
+  }
+  h += `<div class="grigio">Tocca un giorno per vederlo ora per ora.</div></div>`;
+
+  for (const g of v.sopraMonte) {
+    const s = suggerimenti(piano, dati.dipendenti, r, g);
+    const tolte = s.reduce((x, y) => x + y.ore, 0);
+    h += `<div class="carta" style="border:2px solid var(--rosso)"><h2 style="color:var(--rosso)">${GIORNI[g]}: ${hm(oreGiorno(piano[g], r) - r.monteOre[g])} di troppo</h2>
+      <div class="grigio">Dove togliere senza scendere sotto ${r.minApertura} all'apertura, ${r.minChiusura} alla chiusura e ${r.cambio.min} (con un responsabile) al cambio turno:</div>
+      ${s.map(x => `<div class="riga"><span>${esc(nomeDi(x.id))} · ${x.modo === 'tardi' ? 'entra alle ' + ora(x.dopo.inizio) : 'esce alle ' + ora(x.dopo.fine)} invece delle ${x.modo === 'tardi' ? ora(x.prima.inizio) : ora(x.prima.fine)}</span><b>−${hm(x.ore)}</b></div>`).join('')}
+      ${s.length ? `<p><button class="blu" data-az="applica" data-g="${g}">Applica (−${hm(tolte)})</button></p>` : '<div class="no">Non si può togliere altro senza scoprire un turno.</div>'}</div>`;
+  }
+
+  // Griglia persone × giorni
+  h += `<div class="carta griglia"><h2>Turni</h2><table><tr><th></th>${GIORNI.map((n, g) => `<th>${n}<br>${piu(lunedi, g).getDate()}</th>`).join('')}<th>ore</th></tr>`;
+  const ric = richiesteSettimana();
+  for (const d of dati.dipendenti) {
+    h += `<tr><td class="nome">${esc(d.nome)}${d.resp ? ' <span class="etichetta resp">R</span>' : ''}</td>`;
+    for (let g = 0; g < 7; g++) {
+      const t = piano[g][d.id];
+      const q = ric.find(x => x.dip === d.id && x.giorno === g);
+      if (t) {
+        const base = r.fasce[t.fascia];
+        const corto = t.inizio !== base.inizio || t.fine !== base.fine;
+        h += `<td class="cella ${t.fascia} ${corto ? 'corto' : ''}" data-cella="${d.id}|${g}">${t.fascia}<small>${ora(t.inizio)}<br>${ora(t.fine)}</small></td>`;
+      } else h += `<td class="cella ${q?.tipo === 'ferie' ? 'F' : 'R'}" data-cella="${d.id}|${g}">${q ? (q.tipo === 'ferie' ? 'Ferie' : 'Rich.') : '–'}</td>`;
+    }
+    const o = oreSettimana(piano, d.id, r), diff = o - d.ore;
+    h += `<td style="text-align:right;white-space:nowrap"><b>${Math.round(o * 10) / 10}</b>/${d.ore}${Math.abs(diff) > 0.01 ? `<br><span class="${diff > 0 ? 'no' : 'grigio'}">${diff > 0 ? '+' : ''}${Math.round(diff * 10) / 10}</span>` : ''}</td></tr>`;
+  }
+  h += `</table><div class="grigio">M mattina · I intermedio · P pomeriggio · tratteggiato = entra più tardi o esce prima. Tocca una casella per cambiarla.</div></div>`;
+
+  // Andare in pari
+  const b = bilancio(piano, dati.dipendenti, r).filter(x => Math.abs(x.differenza) > 0.01);
+  if (b.length) h += `<div class="carta"><h2>Da mettere in pari</h2>${b.map(x =>
+    `<div class="riga"><span>${esc(x.nome)}</span><span class="${x.differenza > 0 ? 'no' : 'grigio'}">${x.differenza > 0 ? '+' + hm(x.differenza) + ' in più' : hm(-x.differenza) + ' da recuperare'}</span></div>`).join('')}
+    <div class="grigio">Se mancano ore a molti, il monte ore dei giorni (in ⚙️ Regole) è più basso delle ore dei contratti.</div></div>`;
+  return h;
+}
+
+function vistaGiorno(g) {
+  const piano = pianoSettimana(), r = dati.regole;
+  const turni = Object.entries(piano[g]).sort((a, b) => a[1].inizio - b[1].inizio);
+  const c = coperture(piano[g], dati.dipendenti, r);
+  const da = r.fasce.M.inizio, a = r.fasce.P.fine, L = a - da;
+  return `<h2>${GIORNI[g]} ${data(lunedi, g)}</h2>
+    <div class="grigio" style="display:flex;justify-content:space-between;padding-left:84px"><span>${ora(da)}</span><span>13:00</span><span>${ora(a)}</span></div>
+    ${turni.map(([id, t]) => `<div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:78px;font-size:12px;font-weight:600;overflow:hidden;white-space:nowrap">${esc(nomeDi(id))}</span>
+      <div class="linea"><i class="${t.fascia}" style="left:${(t.inizio - da) / L * 100}%;width:${(t.fine - t.inizio) / L * 100}%"></i></div></div>`).join('')}
+    <div class="riga"><span>All'apertura (${ora(da)})</span><b class="${c.apertura >= r.minApertura ? 'ok' : 'no'}">${c.apertura} (min ${r.minApertura})</b></div>
+    <div class="riga"><span>Cambio turno ${ora(r.cambio.da)}–${ora(r.cambio.a)}</span><b class="${c.cambio >= r.cambio.min && c.respCambio ? 'ok' : 'no'}">${c.cambio}${c.respCambio ? ', con resp.' : ', senza resp.'}</b></div>
+    <div class="riga"><span>Alla chiusura (${ora(a)})</span><b class="${c.chiusura >= r.minChiusura ? 'ok' : 'no'}">${c.chiusura} (min ${r.minChiusura})</b></div>
+    <div class="riga"><span>Ore del giorno</span><b>${hm(oreGiorno(piano[g], r))} / ${r.monteOre[g]} h</b></div>
+    <p style="text-align:right"><button data-chiudi>Chiudi</button></p>`;
+}
+
+function modificaCella(id, g) {
+  const piano = pianoSettimana(), r = dati.regole, t = piano[g][id];
+  const f = document.getElementById('finestra');
+  f.innerHTML = `<h2>${esc(nomeDi(id))} · ${GIORNI[g]} ${data(lunedi, g)}</h2>
+    <div class="campo"><span>Turno</span><select id="fF"><option value="">Riposo</option>${Object.entries(FASCE).map(([k, n]) => `<option value="${k}" ${t?.fascia === k ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+    <div class="campo"><span>Entra</span><select id="fI">${opzioniOre(t?.inizio ?? r.fasce.M.inizio)}</select></div>
+    <div class="campo"><span>Esce</span><select id="fE">${opzioniOre(t?.fine ?? r.fasce.M.fine)}</select></div>
+    <p style="display:flex;gap:8px;justify-content:flex-end"><button data-chiudi>Annulla</button><button class="blu" id="fOk">Salva</button></p>`;
+  f.querySelector('#fF').onchange = e => { const k = e.target.value; if (k) { f.querySelector('#fI').value = r.fasce[k].inizio; f.querySelector('#fE').value = r.fasce[k].fine; } };
+  f.querySelector('#fOk').onclick = () => {
+    const k = f.querySelector('#fF').value;
+    if (!k) delete piano[g][id];
+    else piano[g][id] = { fascia: k, inizio: +f.querySelector('#fI').value, fine: +f.querySelector('#fE').value };
+    salva(); f.close(); disegna();
+  };
+  f.showModal();
+}
+
+// ---------- Dipendenti e richieste ----------
+function vistaDipendenti() {
+  const ric = richiesteSettimana();
+  let h = `<h1>Dipendenti <span class="grigio">${dati.dipendenti.length}</span></h1>
+    <p><button class="blu" data-az="nuovo">＋ Nuovo dipendente</button> ${dati.dipendenti.length ? '' : '<button data-az="esempio">Carica 25 di esempio</button>'}</p><div class="carta">`;
+  if (!dati.dipendenti.length) h += `<div class="grigio">Nessun dipendente. Aggiungili uno alla volta, oppure carica un esempio con nomi inventati per provare.</div>`;
+  for (const d of dati.dipendenti)
+    h += `<div class="riga" data-dip="${d.id}" style="cursor:pointer"><span>${esc(d.nome)} ${d.resp ? '<span class="etichetta resp">RESP</span>' : ''}${(d.abilita ?? []).map(a => `<span class="etichetta">${esc(a)}</span>`).join('')}</span><b>${d.ore} h</b></div>`;
+  h += `</div><div class="carta"><h2>Richieste · sett. ${kw(lunedi)} (${data(lunedi, 0)} – ${data(lunedi, 6)})</h2>
+    ${ric.length ? ric.map((q, i) => `<div class="riga"><span>${q.tipo === 'ferie' ? '🏖️' : q.tipo === 'permesso' ? '📄' : '⛔'} ${esc(nomeDi(q.dip))} · ${GIORNI[q.giorno]} ${q.tipo}${q.da != null ? ' ' + ora(q.da) + '–' + ora(q.a) : ''}</span><button class="piccolo rosso" data-togli-ric="${i}">Togli</button></div>`).join('') : '<div class="grigio">Nessuna richiesta per questa settimana.</div>'}
+    <p><button data-az="richiesta" ${dati.dipendenti.length ? '' : 'disabled'}>＋ Nuova richiesta</button></p>
+    <div class="grigio">Le richieste valgono per la settimana scelta in 📋. Dopo averle inserite, rigenera la settimana.</div></div>`;
+  return h;
+}
+
+function modificaDipendente(id) {
+  const d = dati.dipendenti.find(x => x.id === id) ?? { id: 'd' + Date.now(), nome: '', ore: 40, resp: false, abilita: ['cassa'] };
+  const tutte = [...new Set(['frutta', 'pane', 'commissionamento', 'cassa', ...dati.dipendenti.flatMap(x => x.abilita ?? [])])];
+  const f = document.getElementById('finestra');
+  f.innerHTML = `<h2>${id ? 'Modifica' : 'Nuovo'} dipendente</h2>
+    <div class="campo"><span>Nome</span><input id="dN" value="${esc(d.nome)}" placeholder="Nome e cognome"></div>
+    <div class="campo"><span>Ore da contratto</span><input id="dO" type="number" min="4" max="48" value="${d.ore}"></div>
+    <div class="campo"><span>Responsabile</span><input id="dR" type="checkbox" ${d.resp ? 'checked' : ''}></div>
+    <div><span>Abilità</span><div id="dA">${tutte.map(a => `<label style="display:inline-block;margin:4px 8px 4px 0"><input type="checkbox" value="${esc(a)}" ${(d.abilita ?? []).includes(a) ? 'checked' : ''}> ${esc(a)}</label>`).join('')}</div>
+      <input id="dNuova" placeholder="Altra abilità (facoltativa)"></div>
+    <p style="display:flex;gap:8px;justify-content:space-between">${id ? '<button class="rosso" id="dDel">Elimina</button>' : '<span></span>'}
+      <span><button data-chiudi>Annulla</button> <button class="blu" id="dOk">Salva</button></span></p>`;
+  f.querySelector('#dOk').onclick = () => {
+    const nome = f.querySelector('#dN').value.trim();
+    if (!nome) return f.querySelector('#dN').focus();
+    const abil = [...f.querySelectorAll('#dA input:checked')].map(x => x.value);
+    const nuova = f.querySelector('#dNuova').value.trim(); if (nuova) abil.push(nuova);
+    Object.assign(d, { nome, ore: +f.querySelector('#dO').value || 40, resp: f.querySelector('#dR').checked, abilita: abil });
+    if (!dati.dipendenti.includes(d)) dati.dipendenti.push(d);
+    salva(); f.close(); disegna();
+  };
+  if (id) f.querySelector('#dDel').onclick = async () => {
+    if (!await chiedi(`Eliminare ${d.nome}?`, { si: 'Elimina' })) return;
+    dati.dipendenti = dati.dipendenti.filter(x => x !== d); salva(); f.close(); disegna();
+  };
+  f.showModal();
+}
+
+function nuovaRichiesta() {
+  const f = document.getElementById('finestra');
+  f.innerHTML = `<h2>Nuova richiesta</h2>
+    <div class="campo"><span>Chi</span><select id="qD">${dati.dipendenti.map(d => `<option value="${d.id}">${esc(d.nome)}</option>`).join('')}</select></div>
+    <div class="campo"><span>Giorno</span><select id="qG">${GIORNI.map((n, g) => `<option value="${g}">${n} ${data(lunedi, g)}</option>`).join('')}<option value="tutti">Tutta la settimana</option></select></div>
+    <div class="campo"><span>Tipo</span><select id="qT"><option value="ferie">Ferie</option><option value="permesso">Permesso</option><option value="non disponibile">Non disponibile</option></select></div>
+    <div class="campo"><span>Solo in un orario</span><input id="qO" type="checkbox"></div>
+    <div id="qOre" style="display:none"><div class="campo"><span>Dalle</span><select id="qDa">${opzioniOre(840, 0, 1440)}</select></div>
+      <div class="campo"><span>Alle</span><select id="qA">${opzioniOre(1290, 0, 1440)}</select></div></div>
+    <p style="display:flex;gap:8px;justify-content:flex-end"><button data-chiudi>Annulla</button><button class="blu" id="qOk">Aggiungi</button></p>`;
+  f.querySelector('#qO').onchange = e => f.querySelector('#qOre').style.display = e.target.checked ? '' : 'none';
+  f.querySelector('#qOk').onclick = () => {
+    const giorni = f.querySelector('#qG').value === 'tutti' ? [0, 1, 2, 3, 4, 5, 6] : [+f.querySelector('#qG').value];
+    const conOre = f.querySelector('#qO').checked;
+    for (const g of giorni) richiesteSettimana().push({ dip: f.querySelector('#qD').value, giorno: g, tipo: f.querySelector('#qT').value,
+      ...(conOre ? { da: +f.querySelector('#qDa').value, a: +f.querySelector('#qA').value } : {}) });
+    salva(); f.close(); disegna();
+  };
+  f.showModal();
+}
+
+// ---------- Regole ----------
+function vistaRegole() {
+  const r = dati.regole;
+  const num = (path, v, min = 0, max = 200) => `<input type="number" data-regola="${path}" value="${v}" min="${min}" max="${max}">`;
+  let h = `<h1>Regole</h1><div class="carta griglia"><h2>Persone per fascia</h2><table><tr><th></th>${GIORNI.map(n => `<th>${n}</th>`).join('')}</tr>`;
+  for (const k of ['M', 'I', 'P']) h += `<tr><td class="nome">${FASCE[k]}</td>${GIORNI.map((_, g) => `<td>${num(`fabbisogno.${g}.${k}`, r.fabbisogno[g][k], 0, 20)}</td>`).join('')}</tr>`;
+  h += `<tr><td class="nome">Monte ore</td>${GIORNI.map((_, g) => `<td>${num(`monteOre.${g}`, r.monteOre[g], 0, 400)}</td>`).join('')}</tr></table></div>
+    <div class="carta"><h2>Orari dei turni</h2>${['M', 'I', 'P'].map(k => `<div class="campo"><span>${FASCE[k]}</span><span>
+      <select data-regola="fasce.${k}.inizio">${opzioniOre(r.fasce[k].inizio, 240, 1380)}</select> – <select data-regola="fasce.${k}.fine">${opzioniOre(r.fasce[k].fine, 240, 1410)}</select></span></div>`).join('')}
+      <div class="campo"><span>Pausa non pagata (min)</span>${num('pausa', r.pausa, 0, 90)}</div></div>
+    <div class="carta"><h2>Vincoli</h2>
+      <div class="campo"><span>Minimo all'apertura</span>${num('minApertura', r.minApertura, 1, 20)}</div>
+      <div class="campo"><span>Minimo alla chiusura</span>${num('minChiusura', r.minChiusura, 1, 20)}</div>
+      <div class="campo"><span>Minimo al cambio turno (con 1 resp.)</span>${num('cambio.min', r.cambio.min, 1, 20)}</div>
+      <div class="campo"><span>Giorni di lavoro massimi</span>${num('maxGiorni', r.maxGiorni, 1, 7)}</div>
+      <div class="campo"><span>Ore di stacco tra turni</span><input type="number" data-regola="stacco" data-ore value="${r.stacco / 60}" min="8" max="16"></div>
+      <div class="campo"><span>Turno più corto (ore)</span><input type="number" data-regola="durataMin" data-ore value="${r.durataMin / 60}" min="2" max="8"></div></div>
+    <div class="carta"><h2>Copia dei dati</h2><div class="grigio">I dati restano solo in questo telefono o computer. Salva una copia per sicurezza o per passarli a un altro dispositivo.</div>
+      <p><button data-az="esporta">📋 Salva copia</button> <button data-az="importa">📋 Carica copia</button> <button class="rosso" data-az="azzera">Ripristina regole</button></p>
+      <input type="file" id="file" accept="application/json" style="display:none"></div>`;
+  return h;
+}
+
+// ---------- Disegno e azioni ----------
+function disegna() {
+  document.querySelectorAll('.tab button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.getElementById('pagina').innerHTML = tab === 'settimana' ? vistaSettimana() : tab === 'dipendenti' ? vistaDipendenti() : vistaRegole();
+}
+
+document.querySelector('.tab').onclick = e => { const b = e.target.closest('button'); if (b) { tab = b.dataset.tab; disegna(); scrollTo(0, 0); } };
+document.getElementById('finestra').addEventListener('click', e => { if (e.target.closest('[data-chiudi]')) e.currentTarget.close(); });
+
+document.getElementById('pagina').addEventListener('click', async e => {
+  const el = e.target.closest('[data-az],[data-cella],[data-giorno],[data-dip],[data-togli-ric]');
+  if (!el) return;
+  const az = el.dataset.az;
+  if (az === 'prec' || az === 'succ') { lunedi = piu(lunedi, az === 'prec' ? -7 : 7); return disegna(); }
+  if (az === 'genera') {
+    if (pianoSettimana() && !await chiedi('Rifare la settimana? Le modifiche a mano andranno perse.', { si: 'Rifai' })) return;
+    const prec = dati.settimane[chiave(piu(lunedi, -7))];
+    const { piano, scoperti } = genera(dati.dipendenti, dati.regole, richiesteSettimana(), prec, kw(lunedi));
+    dati.settimane[chiave(lunedi)] = piano; salva(); disegna();
+    if (scoperti.length) avvisa('Non ci sono abbastanza persone per: ' + scoperti.map(s => `${GIORNI[s.giorno]} ${FASCE[s.fascia].toLowerCase()} (mancano ${s.manca})`).join(', '));
+    return;
+  }
+  if (az === 'applica') {
+    const g = +el.dataset.g, piano = pianoSettimana();
+    for (const s of suggerimenti(piano, dati.dipendenti, dati.regole, g)) piano[g][s.id] = s.dopo;
+    salva(); return disegna();
+  }
+  if (el.dataset.cella) { const [id, g] = el.dataset.cella.split('|'); return modificaCella(id, +g); }
+  if (el.dataset.giorno) { const f = document.getElementById('finestra'); f.innerHTML = vistaGiorno(+el.dataset.giorno); return f.showModal(); }
+  if (el.dataset.dip) return modificaDipendente(el.dataset.dip);
+  if (el.dataset.togliRic) { richiesteSettimana().splice(+el.dataset.togliRic, 1); salva(); return disegna(); }
+  if (az === 'nuovo') return modificaDipendente(null);
+  if (az === 'richiesta') return nuovaRichiesta();
+  if (az === 'esempio') {
+    const abil = ['frutta', 'pane', 'commissionamento', 'cassa'];
+    dati.dipendenti = Array.from({ length: 25 }, (_, i) => ({ id: 'd' + i, nome: 'Persona ' + (i + 1), resp: i < 5,
+      ore: i >= 23 ? 20 : i % 3 === 0 ? 30 : 40, abilita: [abil[i % 4], 'cassa'].filter((x, j, a) => a.indexOf(x) === j) }));
+    salva(); return disegna();
+  }
+  if (az === 'esporta') {
+    // Il testo della copia: si copia e si incolla in Note o in un messaggio, poi si carica con "Carica copia".
+    chiedi('Copia questo testo e salvalo (per esempio in Note). Per ricaricarlo usa “Carica copia”.', { si: 'Copia', no: 'Chiudi', copia: JSON.stringify(dati) });
+    return;
+  }
+  if (az === 'importa') {
+    const testo = await chiedi('Incolla qui il testo della copia. Sostituisce i dati di questo dispositivo.', { si: 'Carica', incolla: true });
+    if (!testo) return;
+    try { const nuovi = JSON.parse(testo); if (!Array.isArray(nuovi.dipendenti)) throw 0;
+      dati = { ...nuovi, regole: { ...regoleBase(), ...nuovi.regole } }; salva(); disegna(); avvisa('Copia caricata.');
+    } catch { avvisa('Il testo incollato non è una copia di Turnista.'); }
+    return;
+  }
+  if (az === 'azzera') { if (await chiedi('Rimettere le regole di partenza?', { si: 'Ripristina' })) { dati.regole = regoleBase(); salva(); disegna(); } }
+});
+
+document.getElementById('pagina').addEventListener('change', async e => {
+  const el = e.target;
+  if (el.id === 'file' && el.files[0]) {
+    try { const nuovi = JSON.parse(await el.files[0].text()); if (!Array.isArray(nuovi.dipendenti)) throw 0;
+      if (await chiedi('Sostituire i dati di questo dispositivo con la copia?')) { dati = { ...nuovi, regole: { ...regoleBase(), ...nuovi.regole } }; salva(); disegna(); }
+    } catch { avvisa('Il file non è una copia di Turnista.'); }
+    return;
+  }
+  if (el.dataset.regola) {
+    const parti = el.dataset.regola.split('.');
+    let o = dati.regole; for (const p of parti.slice(0, -1)) o = o[p];
+    o[parti.at(-1)] = +el.value * (el.dataset.ore != null ? 60 : 1);
+    salva();
+  }
+});
+
+disegna();
+</script>
+</body>
+</html>
